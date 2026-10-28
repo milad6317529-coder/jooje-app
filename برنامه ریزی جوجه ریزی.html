@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="جوجه‌ریزی">
+<meta name="mobile-web-app-capable" content="yes">
+<title>سامانه مدیریت جوجه‌ریزی</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0b1220; --bg2:#111a2e; --card:#16213a; --card2:#1c2a48; --line:#25365c;
+  --txt:#e8eefc; --muted:#8ea2c8; --acc:#00d4aa; --acc2:#3b82f6;
+  --warn:#f59e0b; --danger:#ef4444; --ok:#22c55e; --purple:#a855f7;
+  --shadow:0 12px 40px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Vazirmatn',sans-serif}
+html,body{ overflow-x:hidden; max-width:100vw; }
+body{
+  background:radial-gradient(1200px 600px at 100% 0%, #1a2440 0%, var(--bg) 45%),
+             radial-gradient(900px 500px at 0% 100%, #0f2a3a 0%, transparent 60%),
+             var(--bg);
+  color:var(--txt); min-height:100vh; padding:14px; font-size:14px;
+}
+.wrap{max-width:1500px;margin:0 auto}
+
+header{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:linear-gradient(135deg,#13224a 0%,#0d1b34 60%,#0e2a2a 100%);
+  border:1px solid var(--line);border-radius:20px;padding:16px 20px;
+  box-shadow:var(--shadow); margin-bottom:14px; flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--acc),#0891b2);font-size:24px;
+  box-shadow:0 8px 24px rgba(0,212,170,.35);}
+.brand h1{font-size:17px;font-weight:800}
+.brand p{font-size:11px;color:var(--muted);margin-top:2px}
+
+select,input,textarea{
+  background:var(--card2);color:var(--txt);border:1px solid var(--line);
+  border-radius:12px;padding:10px 14px;font-family:inherit;font-size:13px;outline:none;transition:.2s;
+}
+select:focus,input:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,212,170,.15)}
+
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tab{padding:10px 18px;border-radius:14px;background:var(--card);border:1px solid var(--line);
+  cursor:pointer;font-weight:600;font-size:13px;transition:.2s;display:flex;align-items:center;gap:8px;}
+.tab:hover{border-color:var(--acc)}
+.tab.active{background:linear-gradient(135deg,var(--acc),#0891b2);border-color:transparent;color:#04121a;
+  box-shadow:0 8px 24px rgba(0,212,170,.3)}
+.tab .badge{background:rgba(0,0,0,.25);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+.stat{background:linear-gradient(135deg,var(--card) 0%,var(--card2) 100%);
+  border:1px solid var(--line);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden;}
+.stat::before{content:'';position:absolute;inset:0 auto 0 0;width:4px;background:var(--acc)}
+.stat.warn::before{background:var(--warn)}
+.stat.danger::before{background:var(--danger)}
+.stat.purple::before{background:var(--purple)}
+.stat .lbl{font-size:11px;color:var(--muted);font-weight:600}
+.stat .val{font-size:22px;font-weight:800;margin-top:4px}
+.stat .sub{font-size:10px;color:var(--muted);margin-top:2px}
+
+.toolbar{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:12px;margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.toolbar input[type=text]{flex:1;min-width:180px}
+.btn{padding:10px 16px;border-radius:11px;border:none;cursor:pointer;font-family:inherit;
+  font-weight:700;font-size:12px;transition:.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{transform:translateY(-1px)}
+.btn-acc{background:linear-gradient(135deg,var(--acc),#0891b2);color:#04121a;box-shadow:0 6px 20px rgba(0,212,170,.3)}
+.btn-blue{background:linear-gradient(135deg,var(--acc2),#6366f1);color:#fff}
+.btn-warn{background:linear-gradient(135deg,var(--warn),#f97316);color:#1a0f00}
+.btn-danger{background:linear-gradient(135deg,var(--danger),#dc2626);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+.btn-ghost:hover{border-color:var(--acc);color:var(--acc)}
+.btn-sm{padding:6px 10px;font-size:11px;border-radius:9px}
+
+.import-banner{
+  background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(239,68,68,.1));
+  border:2px dashed rgba(245,158,11,.5);border-radius:16px;
+  padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;
+  justify-content:space-between;gap:14px;flex-wrap:wrap;
+}
+.import-banner .ib-info{flex:1;min-width:200px}
+.import-banner .ib-info b{display:block;font-size:14px;margin-bottom:4px;color:#fbbf24}
+.import-banner .ib-info span{font-size:12px;color:var(--muted)}
+.import-banner .ib-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.session-card{
+  background:linear-gradient(135deg,rgba(0,212,170,.1),rgba(59,130,246,.08));
+  border:1px solid rgba(0,212,170,.4);border-radius:16px;
+  padding:14px 18px;margin-bottom:14px;display:flex;
+  justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.session-card .sc-info{flex:1;min-width:200px}
+.session-card .sc-info b{display:block;font-size:14px;margin-bottom:4px;color:var(--acc)}
+.session-card .sc-info span{font-size:11px;color:var(--muted)}
+
+.tablebox{background:var(--card);border:1px solid var(--line);border-radius:18px;
+  box-shadow:var(--shadow);overflow:hidden;}
+.table-scroll{overflow-x:auto; overflow-y:auto; max-height:70vh; -webkit-overflow-scrolling:touch;}
+.table-scroll::-webkit-scrollbar{height:10px;width:10px}
+.table-scroll::-webkit-scrollbar-track{background:var(--bg2)}
+.table-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px}
+.table-scroll::-webkit-scrollbar-thumb:hover{background:var(--acc)}
+
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:1350px}
+thead{background:var(--card2);position:sticky;top:0;z-index:2}
+th{text-align:right;padding:13px 10px;font-weight:700;font-size:12px;color:var(--muted);
+  border-bottom:1px solid var(--line);white-space:nowrap;}
+th .th-sub{display:block;font-size:10px;color:var(--muted);opacity:.7;font-weight:500;margin-top:2px}
+td{padding:11px 10px;border-bottom:1px solid rgba(37,54,92,.5);vertical-align:middle}
+tbody tr:hover{background:rgba(0,212,170,.05)}
+tbody tr:last-child td{border-bottom:none}
+
+.fname{font-weight:700;font-size:13px;display:block;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcode{font-size:11px;color:var(--muted);display:block;margin-top:2px;font-family:monospace}
+.jdate{font-family:'Vazirmatn',monospace;direction:ltr;display:inline-block;font-weight:600}
+
+.chip{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
+.chip.west{background:rgba(59,130,246,.15);color:#7fb0ff;border:1px solid rgba(59,130,246,.3)}
+.chip.east{background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
+.chip.none{background:rgba(142,162,200,.15);color:var(--muted);border:1px solid var(--line);cursor:pointer}
+.chip.none:hover{border-color:var(--acc);color:var(--acc)}
+.chip.due{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.35)}
+.chip.overdue{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.35)}
+.chip.done{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.35)}
+.chip.parts{background:rgba(0,212,170,.15);color:#00d4aa;border:1px solid rgba(0,212,170,.35);margin-right:4px}
+.chip.followup{background:rgba(239,68,68,.2);color:#ff8a8a;border:1px solid rgba(239,68,68,.5);animation:pulse 2s infinite}
+.chip.old{background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.35)}
+.chip.info{background:rgba(59,130,246,.15);color:#7fb0ff;border:1px solid rgba(59,130,246,.3)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.65}}
+
+.actions{display:flex;gap:5px;flex-wrap:wrap}
+
+.mobile-cards{display:none;padding:10px;gap:10px}
+.mcard{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px;
+  display:flex;flex-direction:column;gap:8px;}
+.mcard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.mcard-title{font-weight:800;font-size:13px;line-height:1.5}
+.mcard-code{font-size:10px;color:var(--muted);font-weight:600;font-family:monospace}
+.mcard-row{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px dashed rgba(37,54,92,.6)}
+.mcard-row:last-of-type{border-bottom:none}
+.mcard-row .k{color:var(--muted);font-weight:600}
+.mcard-row .v{font-weight:700;color:var(--txt)}
+.mcard-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+
+@media(max-width:850px){
+  .table-scroll{display:none}
+  .mobile-cards{display:flex;flex-direction:column}
+  .brand h1{font-size:15px}
+  .brand p{font-size:10px}
+}
+
+.overlay{position:fixed;inset:0;background:rgba(5,10,20,.75);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:16px;z-index:999;}
+.overlay.show{display:flex;animation:fade .2s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{background:linear-gradient(160deg,var(--card) 0%,var(--bg2) 100%);
+  border:1px solid var(--line);border-radius:20px;max-width:600px;width:100%;
+  padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:pop .25s;
+  max-height:92vh;overflow-y:auto;}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.modal h2{font-size:17px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.modal .sub{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.8}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%}
+.modal-actions{display:flex;gap:8px;justify-content:flex-start;margin-top:18px;flex-wrap:wrap}
+
+.date-field{
+  display:flex;align-items:center;gap:8px;background:var(--card2);
+  border:1px solid var(--line);border-radius:12px;padding:10px 14px;
+  cursor:pointer;transition:.2s;
+}
+.date-field:hover{border-color:var(--acc)}
+.date-field .ico{font-size:16px}
+.date-field .val{flex:1;font-family:'Vazirmatn',monospace;direction:ltr;text-align:right;font-weight:600}
+.date-field .val.empty{color:var(--muted);font-family:'Vazirmatn',sans-serif;font-weight:400}
+
+/* ===== CALENDAR — RESPONSIVE ===== */
+.cal-overlay{
+  position:fixed;inset:0;background:rgba(5,10,20,.85);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;padding:10px;z-index:1100;
+  overflow-y:auto;
+}
+.cal-overlay.show{display:flex;animation:fade .2s}
+.calendar{
+  background:linear-gradient(160deg,#1a2846 0%,#0f1a30 100%);
+  border:1px solid var(--line);border-radius:20px;padding:14px;
+  box-shadow:0 30px 80px rgba(0,0,0,.7);
+  width:100%;max-width:380px;
+  animation:pop .25s;
+  margin:auto;
+}
+.cal-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:12px;gap:6px;
+}
+.cal-title{
+  font-size:15px;font-weight:800;color:var(--acc);
+  white-space:nowrap;
+}
+.cal-nav{display:flex;gap:6px;flex-shrink:0}
+.cal-nav button{
+  width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
+  background:var(--card2);color:var(--txt);cursor:pointer;font-size:14px;
+  display:grid;place-items:center;transition:.2s;flex-shrink:0;
+}
+.cal-nav button:hover{background:var(--acc);color:#04121a;border-color:var(--acc)}
+.cal-nav button:active{transform:scale(.92)}
+
+.cal-weekdays{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px;
+}
+.cal-weekdays div{
+  text-align:center;font-size:10px;font-weight:700;color:var(--muted);
+  padding:4px 0;
+}
+.cal-weekdays div.friday{color:#f87171}
+
+.cal-days{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;
+}
+.cal-day{
+  aspect-ratio:1;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  cursor:pointer;font-size:12px;font-weight:600;
+  border:1px solid transparent;
+  transition:.15s;
+  background:transparent;color:var(--txt);
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+  min-width:0;
+  min-height:0;
+}
+.cal-day:hover:not(.empty):not(.disabled){
+  background:rgba(0,212,170,.15);border-color:rgba(0,212,170,.4);
+}
+.cal-day:active:not(.empty):not(.disabled){
+  transform:scale(.92);
+}
+.cal-day.empty{visibility:hidden;pointer-events:none}
+.cal-day.today{border-color:var(--acc2);color:#7fb0ff;font-weight:800}
+.cal-day.selected{
+  background:linear-gradient(135deg,var(--acc),#0891b2);
+  color:#04121a;font-weight:800;
+  box-shadow:0 4px 14px rgba(0,212,170,.4);
+}
+.cal-day.friday{color:#f87171}
+.cal-day.friday.selected{color:#04121a}
+
+.cal-footer{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:12px;gap:6px;flex-wrap:wrap;
+}
+.cal-footer .preview{
+  font-size:11px;color:var(--muted);font-family:monospace;direction:ltr;
+  flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.cal-footer .preview b{color:var(--acc);font-size:12px}
+.cal-close{
+  padding:7px 14px;border-radius:9px;border:1px solid var(--line);
+  background:transparent;color:var(--txt);cursor:pointer;
+  font-family:inherit;font-size:11px;font-weight:700;
+  flex-shrink:0;
+}
+.cal-close:hover{border-color:var(--acc);color:var(--acc)}
+.cal-close:active{transform:scale(.95)}
+
+/* 📱 ریسپانسیو برای گوشی‌های کوچک */
+@media(max-width:400px){
+  .calendar{padding:10px;border-radius:16px;max-width:100%}
+  .cal-header{margin-bottom:8px}
+  .cal-title{font-size:13px}
+  .cal-nav button{width:28px;height:28px;font-size:12px;border-radius:8px}
+  .cal-weekdays div{font-size:9px;padding:3px 0}
+  .cal-days{gap:2px}
+  .cal-weekdays{gap:2px}
+  .cal-day{font-size:11px;border-radius:6px}
+  .cal-footer{margin-top:8px}
+  .cal-footer .preview{font-size:10px}
+  .cal-footer .preview b{font-size:11px}
+  .cal-close{padding:6px 10px;font-size:10px}
+}
+
+/* 📱 گوشی‌های خیلی کوچک (<360px) */
+@media(max-width:360px){
+  .cal-overlay{padding:6px}
+  .calendar{padding:8px}
+  .cal-title{font-size:12px}
+  .cal-nav button{width:26px;height:26px;font-size:11px}
+  .cal-weekdays div{font-size:8px;padding:2px 0}
+  .cal-day{font-size:10px;border-radius:5px}
+  .cal-days{gap:1.5px}
+  .cal-weekdays{gap:1.5px}
+}
+
+/* 🔄 حالت افقی (landscape) */
+@media(max-height:500px) and (orientation:landscape){
+  .cal-overlay{padding:4px;align-items:flex-start}
+  .calendar{
+    max-width:340px;padding:8px;
+    display:flex;flex-direction:column;
+    max-height:calc(100vh - 8px);
+    overflow-y:auto;
+  }
+  .cal-header{margin-bottom:6px}
+  .cal-title{font-size:12px}
+  .cal-nav button{width:26px;height:26px;font-size:11px}
+  .cal-day{font-size:10px}
+  .cal-weekdays div{font-size:8px;padding:2px 0}
+  .cal-footer{margin-top:6px}
+}
+
+.alert-item{background:var(--card2);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;
+  align-items:center;gap:12px;flex-wrap:wrap;}
+.alert-item.urgent{border-color:rgba(239,68,68,.5);background:linear-gradient(135deg,rgba(239,68,68,.08),var(--card2))}
+.alert-item.soon{border-color:rgba(245,158,11,.5);background:linear-gradient(135deg,rgba(245,158,11,.08),var(--card2))}
+.alert-item.followup{border-color:rgba(239,68,68,.5);background:linear-gradient(135deg,rgba(239,68,68,.15),var(--card2));animation:pulse 2.5s infinite}
+.alert-item .info b{display:block;font-size:13px;margin-bottom:3px}
+.alert-item .info span{font-size:11px;color:var(--muted)}
+
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty .icon{font-size:48px;margin-bottom:12px;opacity:.6}
+
+.toast{position:fixed;bottom:20px;left:20px;background:linear-gradient(135deg,var(--acc),#0891b2);
+  color:#04121a;padding:13px 20px;border-radius:13px;font-weight:700;font-size:13px;
+  box-shadow:0 12px 40px rgba(0,212,170,.4);z-index:1000;transform:translateY(120px);
+  transition:.35s;display:flex;align-items:center;gap:8px;max-width:90vw;}
+.toast.show{transform:translateY(0)}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%}
+
+.session-list{display:flex;flex-direction:column;gap:12px}
+.session-item{
+  background:linear-gradient(135deg,var(--card) 0%,var(--card2) 100%);
+  border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+  box-shadow:var(--shadow);
+}
+.session-item.current{
+  border-color:rgba(0,212,170,.6);
+  background:linear-gradient(135deg,rgba(0,212,170,.1),rgba(59,130,246,.05));
+}
+.session-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  margin-bottom:10px;flex-wrap:wrap;
+}
+.session-head h3{font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
+.session-stats{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:10px}
+.session-stats b{color:var(--txt);font-weight:700}
+.session-actions{display:flex;gap:6px;flex-wrap:wrap}
+.log-list{
+  max-height:280px;overflow-y:auto;margin-top:10px;padding-top:10px;
+  border-top:1px solid rgba(37,54,92,.6);
+}
+.log-item{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+  padding:8px 10px;border-radius:10px;background:rgba(11,18,32,.5);
+  margin-bottom:6px;font-size:11px;flex-wrap:wrap;
+}
+.log-item .l-date{color:var(--acc);font-weight:700;font-family:monospace;direction:ltr;min-width:90px}
+.log-item .l-text{flex:1;color:var(--txt);line-height:1.6}
+.log-item .l-type{
+  padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;
+  background:rgba(59,130,246,.15);color:#7fb0ff;white-space:nowrap;
+}
+
+footer{
+  text-align:center; padding:24px 12px 8px; margin-top:18px;
+  font-size:11px; color:var(--muted); letter-spacing:.3px;
+  border-top:1px solid rgba(37,54,92,.5);
+}
+footer b{ color:var(--acc); font-weight:700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="logo">🐣</div>
+      <div>
+        <h1>سامانه مدیریت جوجه‌ریزی</h1>
+        <p>کارشناسان بازدید — غرب و شرق استان</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--muted)">کارشناس:</span>
+      <select id="currentUser">
+        <option value="ناظر کل">ناظر کل</option>
+        <option value="کارشناس غرب">کارشناس غرب</option>
+        <option value="کارشناس شرق">کارشناس شرق</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="dashboard">📊 داشبورد</div>
+    <div class="tab" data-tab="alerts">🔔 هشدارها <span class="badge" id="alertCount">0</span></div>
+    <div class="tab" data-tab="history">📚 سابقه <span class="badge" id="historyCount">0</span></div>
+    <div class="tab" data-tab="import">📥 بارگذاری اکسل</div>
+  </div>
+
+  <div id="tab-dashboard">
+    <div id="importBannerContainer"></div>
+    <div id="sessionCardContainer"></div>
+
+    <div class="grid" id="statsGrid"></div>
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="🔍 جستجو: نام فارم، کد، جوجه‌کشی...">
+      <select id="regionFilter">
+        <option value="all">همه مناطق</option>
+        <option value="west">فقط غرب</option>
+        <option value="east">فقط شرق</option>
+        <option value="unassigned">تخصیص‌نیافته</option>
+      </select>
+      <select id="statusFilter">
+        <option value="all">همه وضعیت‌ها</option>
+        <option value="pending">در انتظار بازدید</option>
+        <option value="visited">بازدید شده</option>
+        <option value="followup6">پیگیری روز ۶</option>
+      </select>
+    </div>
+
+    <div class="tablebox">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>نام فارم / کد</th>
+              <th>تاریخ هچ<span class="th-sub">مبنای محاسبه</span></th>
+              <th>تخصیص</th>
+              <th>جوجه‌کشی</th>
+              <th>نژاد</th>
+              <th>سن گله</th>
+              <th>منطقه</th>
+              <th>بازدید<span class="th-sub">هچ − ۳ روز</span></th>
+              <th>پیگیری روز ۶<span class="th-sub">هچ + ۶ روز</span></th>
+              <th>وضعیت</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="farmsBody"></tbody>
+        </table>
+      </div>
+      <div class="mobile-cards" id="mobileCards"></div>
+    </div>
+
+    <div class="legend">
+      <span><span class="dot" style="background:var(--danger)"></span> بازدید عقب‌افتاده / پیگیری روز ۶</span>
+      <span><span class="dot" style="background:var(--warn)"></span> بازدید امروز/فردا</span>
+      <span><span class="dot" style="background:var(--ok)"></span> بازدید انجام شده</span>
+      <span><span class="dot" style="background:var(--acc)"></span> نشان چند پارت</span>
+    </div>
+  </div>
+
+  <div id="tab-alerts" style="display:none">
+    <div class="toolbar">
+      <strong style="font-size:14px">🔔 هشدارها و پیگیری‌های فعال</strong>
+    </div>
+    <div id="alertsList"></div>
+  </div>
+
+  <div id="tab-history" style="display:none">
+    <div class="toolbar">
+      <strong style="font-size:14px">📚 سابقه هفته‌های ثبت‌شده</strong>
+      <span style="font-size:11px;color:var(--muted);margin-right:auto">
+        هر هفته پس از آپلود اکسل و زدن دکمه «ثبت هفته»، در سابقه آرشیو می‌شود
+      </span>
+    </div>
+    <div id="historyList" class="session-list"></div>
+  </div>
+
+  <div id="tab-import" style="display:none">
+    <div class="tablebox" style="padding:22px">
+      <h2 style="font-size:16px;margin-bottom:8px">📥 بارگذاری فایل اکسل هفتگی</h2>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.8">
+        ستون‌های موردنیاز: کد فارم، فارم، تاریخ هچ، تخصیص به فارم، جوجه کشی، نژاد، سن گله<br>
+        <span style="color:var(--warn)">⚠️ پارت‌های تکراری (1،2،3) خودکار با هم ادغام می‌شوند — تاریخ پارت اول مبنا</span><br>
+        <span style="color:var(--acc)">💡 <b>قوانین محاسبه:</b> بازدید = هچ − ۳ روز (پنجشنبه/جمعه → چهارشنبه) · پیگیری = هچ + ۶ روز</span>
+      </p>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-acc" onclick="document.getElementById('fileInput').click()">📁 انتخاب فایل اکسل</button>
+        <button class="btn btn-ghost" onclick="loadDemoData()">🎲 داده نمونه</button>
+        <button class="btn btn-danger" onclick="clearAllData()">🗑 پاک‌سازی همه</button>
+      </div>
+      <div id="importStatus" style="margin-top:14px;font-size:12px;color:var(--acc);line-height:1.8"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="visitModal">
+  <div class="modal">
+    <h2>📝 ثبت بازدید</h2>
+    <div class="sub" id="visitFarmName"></div>
+    <div class="field"><label>تاریخ بازدید</label>
+      <div class="date-field" onclick="openCalendar('visitDate')">
+        <span class="ico">📅</span>
+        <span class="val" id="visitDateDisplay">انتخاب تاریخ</span>
+      </div>
+      <input type="hidden" id="visitDate">
+    </div>
+    <div class="field"><label>نتیجه بازدید</label>
+      <select id="visitResult">
+        <option value="ok">✅ سالم و مورد تایید برای جوجه‌ریزی</option>
+        <option value="warn">🟡 هشدار جزئی</option>
+        <option value="fail">❌ رد شد / کنسلی</option>
+      </select>
+    </div>
+    <div class="field"><label>یادداشت</label><textarea id="visitNote" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-acc" onclick="saveVisit()">💾 ذخیره</button>
+      <button class="btn btn-ghost" onclick="closeModal('visitModal')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="followupModal">
+  <div class="modal">
+    <h2>📊 پیگیری روز ۶ — شمارش تلفات</h2>
+    <div class="sub" id="followupFarmName"></div>
+    <div class="field"><label>تاریخ پیگیری</label>
+      <div class="date-field" onclick="openCalendar('followupDate')">
+        <span class="ico">📅</span>
+        <span class="val" id="followupDateDisplay">انتخاب تاریخ</span>
+      </div>
+      <input type="hidden" id="followupDate">
+    </div>
+    <div class="field"><label>درصد تلفات مشاهده‌شده</label>
+      <input type="number" id="followupDeadPct" step="0.1" min="0" max="100" placeholder="مثلا 2.5">
+    </div>
+    <div class="field"><label>نتیجه</label>
+      <select id="followupResult">
+        <option value="ok">✅ تلفات نرمال (زیر ۲٪) — پایان پیگیری</option>
+        <option value="high">⚠️ تلفات بالای ۲٪ — نیاز به بازدید مجدد / شمارش دقیق</option>
+        <option value="veryhigh">🚨 تلفات بسیار بالا — ارجاع فوری</option>
+      </select>
+    </div>
+    <div class="field"><label>یادداشت</label><textarea id="followupNote" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-acc" onclick="saveFollowup()">💾 ثبت پیگیری</button>
+      <button class="btn btn-ghost" onclick="closeModal('followupModal')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="regionModal">
+  <div class="modal">
+    <h2>🗺 تعیین منطقه</h2>
+    <div class="sub" id="regionFarmName"></div>
+    <div class="field"><label>منطقه</label>
+      <select id="regionSelect">
+        <option value="west">غرب استان</option>
+        <option value="east">شرق استان</option>
+        <option value="">حذف تخصیص</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-blue" onclick="saveRegion()">💾 ذخیره</button>
+      <button class="btn btn-ghost" onclick="closeModal('regionModal')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="moveModal">
+  <div class="modal">
+    <h2>📅 جابجایی بازدید</h2>
+    <div class="sub" id="moveFarmName"></div>
+    <div class="field"><label>تاریخ جدید</label>
+      <div class="date-field" onclick="openCalendar('moveDate')">
+        <span class="ico">📅</span>
+        <span class="val" id="moveDateDisplay">انتخاب تاریخ</span>
+      </div>
+      <input type="hidden" id="moveDate">
+    </div>
+    <div class="field"><label>دلیل</label>
+      <select id="moveReason">
+        <option value="traffic">بازدید زیاد آن روز</option>
+        <option value="cancel">کنسلی</option>
+        <option value="weekend">تعطیلی</option>
+        <option value="other">سایر</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-warn" onclick="saveMove()">💾 ثبت</button>
+      <button class="btn btn-ghost" onclick="closeModal('moveModal')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<div class="cal-overlay" id="calOverlay">
+  <div class="calendar">
+    <div class="cal-header">
+      <div class="cal-title" id="calTitle">—</div>
+      <div class="cal-nav">
+        <button onclick="calNav(-1)">‹</button>
+        <button onclick="calNav(1)">›</button>
+      </div>
+    </div>
+    <div class="cal-weekdays">
+      <div>ش</div><div>ی</div><div>د</div><div>س</div><div>چ</div><div class="friday">پ</div><div class="friday">ج</div>
+    </div>
+    <div class="cal-days" id="calDays"></div>
+    <div class="cal-footer">
+      <div class="preview" id="calPreview">—</div>
+      <button class="cal-close" onclick="closeCalendar()">بستن</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  توسعه‌دهنده: <b>میلاد طیبی</b>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   🧹 پاک‌سازی خودکار داده‌های خراب نسخه‌های قبلی
+   ========================================================================= */
+(function cleanupOldVersions(){
+  if(localStorage.getItem('jooje_v9_migrated')) return;
+  const oldKeys = [
+    'jooje_farms_v4','jooje_farms_v5','jooje_farms_v6','jooje_farms_v7','jooje_farms_v8',
+    'jooje_sessions_v1','jooje_sessions_v2','jooje_sessions_v3',
+    'jooje_current_session_v1','jooje_current_session_v2','jooje_current_session_v3'
+  ];
+  oldKeys.forEach(k => localStorage.removeItem(k));
+  localStorage.setItem('jooje_v9_migrated','1');
+})();
+
+/* =========================================================================
+   JALALI CORE — الگوریتم دقیق jalaali-js
+   ========================================================================= */
+const FA='۰۱۲۳۴۵۶۷۸۹', AR='٠١٢٣٤٥٦٧٨٩';
+function pad2(n){ return String(n).padStart(2,'0'); }
+function toEnglishDigits(s){
+  return String(s).replace(/[۰-۹]/g,c=>FA.indexOf(c)).replace(/[٠-٩]/g,c=>AR.indexOf(c));
+}
+function div(a, b){ return Math.trunc(a / b); }
+
+function g2d(gy, gm, gd){
+  let d = div((gy + div(gm - 8, 6) + 100100) * 1461, 4)
+        + div(153 * ((gm + 9) % 12) + 2, 5)
+        + gd - 34840408;
+  d = d - div(div(gy + 100100 + div(gm - 8, 6), 100) * 3, 4) + 752;
+  return d;
+}
+function d2g(jdn){
+  let j = 4 * jdn + 139361631;
+  j = j + div(div(4 * jdn + 183187720, 146097) * 3, 4) * 4 - 3908;
+  const i = div((j % 1461), 4) * 5 + 308;
+  const gd = div((i % 153), 5) + 1;
+  const gm = (div(i, 153) % 12) + 1;
+  const gy = div(j, 1461) - 100100 + div(8 - gm, 6);
+  return {gy, gm, gd};
+}
+function jalCal(jy){
+  const breaks = [-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2324,2394,2456,3178];
+  const bl = breaks.length;
+  const gy = jy + 621;
+  let leapJ = -14;
+  let jp = breaks[0];
+  let jump = 0;
+  if(jy < jp || jy >= breaks[bl-1]) throw new Error('سال شمسی خارج از محدوده: ' + jy);
+  for(let i = 1; i < bl; i++){
+    const jm = breaks[i];
+    jump = jm - jp;
+    if(jy < jm) break;
+    leapJ = leapJ + div(jump, 33) * 8 + div((jump % 33), 4);
+    jp = jm;
+  }
+  let n = jy - jp;
+  leapJ = leapJ + div(n, 33) * 8 + div(((n % 33) + 3), 4);
+  if((jump % 33) === 4 && jump - n === 4) leapJ += 1;
+  const leapG = div(gy, 4) - div((div(gy, 100) + 1) * 3, 4) - 150;
+  const march = 20 + leapJ - leapG;
+  if((jump - n) < 6) n = n - jump + div((jump + 4), 33) * 33;
+  let leap = ((((n + 1) % 33) - 1) % 4);
+  if(leap === -1) leap = 4;
+  return {leap, gy, march};
+}
+function j2d(jy, jm, jd){
+  const r = jalCal(jy);
+  return g2d(r.gy, 3, r.march) + (jm - 1) * 31 - div(jm, 7) * (jm - 7) + jd - 1;
+}
+function d2j(jdn){
+  const gy = d2g(jdn).gy;
+  let jy = gy - 621;
+  const r = jalCal(jy);
+  const jdn1f = g2d(gy, 3, r.march);
+  let k = jdn - jdn1f;
+  if(k >= 0){
+    if(k <= 185) return {jy, jm: 1 + div(k, 31), jd: (k % 31) + 1};
+    k -= 186;
+  } else {
+    jy -= 1;
+    k += 179;
+    if(r.leap === 1) k += 1;
+  }
+  return {jy, jm: 7 + div(k, 30), jd: (k % 30) + 1};
+}
+function jalaliToJDN(jy, jm, jd){ return j2d(jy, jm, jd); }
+function JDNToJalali(jdn){ return d2j(jdn); }
+function gregorianToJalali(gy, gm, gd){ return d2j(g2d(gy, gm, gd)); }
+function jalaliToGregorian(jy, jm, jd){ return d2g(j2d(jy, jm, jd)); }
+
+function fixJalali(raw){
+  if(!raw) return '';
+  let s = toEnglishDigits(String(raw))
+    .replace(/[^\d\/]/g, '/')
+    .replace(/\/+/g, '/')
+    .replace(/^\/|\/$/g, '');
+  const parts = s.split('/').filter(Boolean).map(Number);
+  if(parts.length < 3) return '';
+  let [y, m, d] = parts;
+  if(y < 100) y += 1400;
+  if(m > 12 || d > 31){ [m, d] = [d, m]; }
+  if(m < 1 || m > 12) return '';
+  if(d < 1) return '';
+  const maxDay = m <= 6 ? 31 : (m <= 11 ? 30 : 30);
+  if(d > maxDay) return '';
+  try {
+    const jdn = jalaliToJDN(y, m, d);
+    const back = JDNToJalali(jdn);
+    if(back.jy !== y || back.jm !== m || back.jd !== d) return '';
+    return `${y}/${pad2(m)}/${pad2(d)}`;
+  } catch(e){ return ''; }
+}
+function todayJalali(){
+  const now = new Date();
+  const j = gregorianToJalali(now.getFullYear(), now.getMonth()+1, now.getDate());
+  return `${j.jy}/${pad2(j.jm)}/${pad2(j.jd)}`;
+}
+function diffDays(jA, jB){
+  const pA = String(jA||'').split('/').map(Number);
+  const pB = String(jB||'').split('/').map(Number);
+  if(pA.length<3 || pB.length<3) return null;
+  try {
+    return jalaliToJDN(pB[0], pB[1], pB[2]) - jalaliToJDN(pA[0], pA[1], pA[2]);
+  } catch(e){ return null; }
+}
+function addDaysJalali(jalali, n){
+  const p = String(jalali||'').split('/').map(Number);
+  if(p.length<3) return '';
+  try {
+    const jdn = jalaliToJDN(p[0], p[1], p[2]) + n;
+    const j = JDNToJalali(jdn);
+    return `${j.jy}/${pad2(j.jm)}/${pad2(j.jd)}`;
+  } catch(e){ return ''; }
+}
+function jalaliWeekday(jalali){
+  const p = String(jalali||'').split('/').map(Number);
+  if(p.length<3) return -1;
+  try {
+    return (jalaliToJDN(p[0], p[1], p[2]) + 2) % 7;
+  } catch(e){ return -1; }
+}
+function suggestVisitDate(hatch){
+  if(!hatch) return '';
+  const fixed = fixJalali(hatch);
+  if(!fixed) return '';
+  let sug = addDaysJalali(fixed, -3);
+  if(!sug) return '';
+  const dow = jalaliWeekday(sug);
+  if(dow === 5) sug = addDaysJalali(sug, -1);
+  else if(dow === 6) sug = addDaysJalali(sug, -2);
+  return sug;
+}
+function getFollowupDue(f){
+  if(!f.hatch) return '';
+  return addDaysJalali(f.hatch, 6);
+}
+function isJalaliLeapYear(jy){
+  try { return jalCal(jy).leap === 0; } catch(e){ return false; }
+}
+function excelDateToJalali(val){
+  if(val === null || val === undefined || val === '') return '';
+  if(val instanceof Date){
+    const j = gregorianToJalali(val.getFullYear(), val.getMonth()+1, val.getDate());
+    return `${j.jy}/${pad2(j.jm)}/${pad2(j.jd)}`;
+  }
+  if(typeof val === 'string'){
+    const s = val.trim();
+    const miladi = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if(miladi && +miladi[1] >= 1900 && +miladi[1] <= 2100){
+      const j = gregorianToJalali(+miladi[1], +miladi[2], +miladi[3]);
+      return `${j.jy}/${pad2(j.jm)}/${pad2(j.jd)}`;
+    }
+    const fixed = fixJalali(s);
+    if(fixed) return fixed;
+    if(/^\d+(\.\d+)?$/.test(toEnglishDigits(s)))
+      return excelSerialToJalali(parseFloat(toEnglishDigits(s)));
+  }
+  if(typeof val === 'number') return excelSerialToJalali(val);
+  return '';
+}
+function excelSerialToJalali(serial){
+  if(!serial || serial < 1) return '';
+  const ms = Math.round((serial - 25569) * 86400 * 1000);
+  const d = new Date(ms);
+  const j = gregorianToJalali(d.getUTCFullYear(), d.getUTCMonth()+1, d.getUTCDate());
+  return `${j.jy}/${pad2(j.jm)}/${pad2(j.jd)}`;
+}
+
+/* =========================================================================
+   HELPER: روز مانده تا پیگیری (مثبت=آینده، 0=امروز، منفی=گذشته)
+   ========================================================================= */
+function followupDaysUntil(f){
+  const due = getFollowupDue(f);
+  if(!due) return null;
+  return diffDays(todayJalali(), due);
+}
+
+/* =========================================================================
+   STORAGE
+   ========================================================================= */
+const KEY = 'jooje_farms_v10';
+const KEY_SESSIONS = 'jooje_sessions_v5';
+const KEY_CURRENT_SESSION = 'jooje_current_session_v5';
+
+let farms = JSON.parse(localStorage.getItem(KEY) || '[]');
+let sessions = JSON.parse(localStorage.getItem(KEY_SESSIONS) || '[]');
+let currentSession = JSON.parse(localStorage.getItem(KEY_CURRENT_SESSION) || 'null');
+let currentFilter = { search:'', region:'all', status:'all' };
+let editing = { visitId:null, followupId:null, regionId:null, moveId:null };
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(farms)); }
+function saveSessions(){ localStorage.setItem(KEY_SESSIONS, JSON.stringify(sessions)); }
+function saveCurrentSession(){ localStorage.setItem(KEY_CURRENT_SESSION, JSON.stringify(currentSession)); }
+
+/* =========================================================================
+   LOG/SESSION
+   ========================================================================= */
+function addLog(action, details){
+  if(!currentSession) startNewSession('هفته جاری');
+  if(!currentSession.logs) currentSession.logs = [];
+  currentSession.logs.push({
+    date: todayJalali(),
+    time: new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}),
+    action, details
+  });
+  saveCurrentSession();
+}
+function startNewSession(name){
+  currentSession = {
+    id: 'week_' + Date.now(),
+    name: name || ('هفته ' + todayJalali()),
+    startedAt: todayJalali(),
+    fileInfo: null,
+    farmsCount: 0,
+    logs: [],
+    active: true
+  };
+  saveCurrentSession();
+  render();
+}
+function registerFileUpload(fileName, farmsCount){
+  if(!currentSession) startNewSession('هفته ' + todayJalali());
+  currentSession.fileInfo = { name: fileName, uploadedAt: todayJalali(), farmsCount };
+  currentSession.farmsCount = farmsCount;
+  addLog('آپلود اکسل', `فایل «${fileName}» با ${farmsCount} فارم بارگذاری شد`);
+  saveCurrentSession();
+  render();
+}
+function commitCurrentWeek(){
+  if(!currentSession){ toast('❌ هیچ فایل اکسل آپلود نشده است'); return; }
+  if(!currentSession.fileInfo){ toast('❌ ابتدا فایل اکسل را آپلود کنید'); return; }
+  if(!confirm('داده‌های این هفته در سابقه ثبت شود؟')) return;
+  const snapshot = {
+    id: currentSession.id,
+    name: currentSession.name,
+    startedAt: currentSession.startedAt,
+    committedAt: todayJalali(),
+    fileInfo: currentSession.fileInfo,
+    farmsCount: farms.length,
+    farms: JSON.parse(JSON.stringify(farms)),
+    logs: (currentSession.logs || []).slice()
+  };
+  sessions.unshift(snapshot);
+  saveSessions();
+  currentSession = null;
+  saveCurrentSession();
+  toast('📚 هفته با موفقیت در سابقه ذخیره شد');
+  render();
+}
+
+/* =========================================================================
+   CALENDAR
+   ========================================================================= */
+let calState = { year:0, month:0, target:'', selected:'' };
+const CAL_MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+
+function openCalendar(targetId){
+  document.body.style.overflow = 'hidden';
+  const input = document.getElementById(targetId);
+  const currentVal = input.value ? fixJalali(input.value) : todayJalali();
+  const parts = (currentVal || todayJalali()).split('/').map(Number);
+  calState.target = targetId;
+  calState.year = parts[0];
+  calState.month = parts[1];
+  calState.selected = input.value ? fixJalali(input.value) : '';
+  renderCalendar();
+  document.getElementById('calOverlay').classList.add('show');
+}
+function closeCalendar(){
+  document.body.style.overflow = '';
+  document.getElementById('calOverlay').classList.remove('show');
+}
+function calNav(dir){
+  calState.month += dir;
+  if(calState.month > 12){ calState.month = 1; calState.year++; }
+  if(calState.month < 1){ calState.month = 12; calState.year--; }
+  renderCalendar();
+}
+function renderCalendar(){
+  const {year, month, selected} = calState;
+  document.getElementById('calTitle').textContent = `${CAL_MONTHS[month-1]} ${year}`;
+  const firstDayOfMonth = `${year}/${pad2(month)}/01`;
+  const firstDow = jalaliWeekday(firstDayOfMonth);
+  const daysInMonth = month <= 6 ? 31 : (month <= 11 ? 30 : (isJalaliLeapYear(year) ? 30 : 29));
+  const today = todayJalali();
+  const container = document.getElementById('calDays');
+  let html = '';
+  for(let i=0; i<firstDow; i++) html += '<div class="cal-day empty"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${year}/${pad2(month)}/${pad2(d)}`;
+    const isToday = dateStr === today;
+    const isSelected = dateStr === selected;
+    const dow = (firstDow + d - 1) % 7;
+    const isFriday = dow === 6;
+    let cls = 'cal-day';
+    if(isToday) cls += ' today';
+    if(isSelected) cls += ' selected';
+    if(isFriday && !isSelected) cls += ' friday';
+    html += `<div class="${cls}" onclick="pickDate(${year},${month},${d})">${d}</div>`;
+  }
+  container.innerHTML = html;
+  document.getElementById('calPreview').innerHTML = selected
+    ? `تاریخ: <b>${selected}</b>`
+    : 'تاریخ را انتخاب کنید';
+}
+function pickDate(y,m,d){
+  const str = `${y}/${pad2(m)}/${pad2(d)}`;
+  calState.selected = str;
+  renderCalendar();
+  const target = calState.target;
+  document.getElementById(target).value = str;
+  const disp = document.getElementById(target + 'Display');
+  if(disp){ disp.textContent = str; disp.classList.remove('empty'); }
+  setTimeout(closeCalendar, 200);
+}
+
+/* =========================================================================
+   RENDER
+   ========================================================================= */
+function getToday(){ return todayJalali(); }
+
+function render(){
+  farms.forEach(f=>{
+    if(f.hatch){
+      const fixed = fixJalali(f.hatch);
+      f.hatch = fixed || '';
+      if(f.hatch){
+        if(!f.moveReason){
+          f.suggested = suggestVisitDate(f.hatch);
+        } else {
+          f.suggested = fixJalali(f.suggested) || suggestVisitDate(f.hatch);
+        }
+      } else {
+        f.suggested = '';
+      }
+      if(!f.followup6) f.followup6 = { status:'pending' };
+    }
+  });
+  save();
+  renderImportBanner();
+  renderSessionCard();
+  renderStats(); renderFarms(); renderAlerts();
+  renderHistory();
+}
+
+function renderImportBanner(){
+  const c = document.getElementById('importBannerContainer');
+  if(!farms.length || (currentSession && currentSession.fileInfo)){ c.innerHTML = ''; return; }
+  if(farms.length > 0){
+    c.innerHTML = `
+      <div class="import-banner">
+        <div class="ib-info">
+          <b>⚠️ داده‌های آپلود شده هنوز در سابقه ثبت نشده‌اند</b>
+          <span>${farms.length} فارم در داشبورد — با کلیک «ثبت هفته» در سابقه آرشیو شود</span>
+        </div>
+        <div class="ib-actions">
+          <button class="btn btn-warn" onclick="initWeekAndCommit()">📚 ثبت هفته در سابقه</button>
+        </div>
+      </div>
+    `;
+  }
+}
+function renderSessionCard(){
+  const c = document.getElementById('sessionCardContainer');
+  if(!currentSession || !currentSession.fileInfo){ c.innerHTML = ''; return; }
+  const logCount = (currentSession.logs || []).length;
+  c.innerHTML = `
+    <div class="session-card">
+      <div class="sc-info">
+        <b>📥 فایل اکسل فعال: ${currentSession.fileInfo.name}</b>
+        <span>آپلود: ${currentSession.fileInfo.uploadedAt} — ${farms.length} فارم — ${logCount} رویداد ثبت‌شده</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-acc" onclick="commitCurrentWeek()">📚 ثبت هفته در سابقه</button>
+      </div>
+    </div>
+  `;
+}
+function initWeekAndCommit(){
+  if(!currentSession) startNewSession('هفته ' + todayJalali());
+  if(!currentSession.fileInfo){
+    currentSession.fileInfo = { name: 'داده دستی', uploadedAt: todayJalali(), farmsCount: farms.length };
+    saveCurrentSession();
+  }
+  commitCurrentWeek();
+}
+function filterByUser(list){
+  const user = document.getElementById('currentUser').value;
+  if(user === 'کارشناس غرب') return list.filter(f=>f.region==='west');
+  if(user === 'کارشناس شرق') return list.filter(f=>f.region==='east');
+  return list;
+}
+
+function renderStats(){
+  const today = getToday();
+  const list = filterByUser(farms);
+  const total = list.length;
+  const west = list.filter(f=>f.region==='west').length;
+  const east = list.filter(f=>f.region==='east').length;
+  const unassigned = list.filter(f=>!f.region).length;
+  const todayVisits = list.filter(f=>f.suggested === today).length;
+  const overdue = list.filter(f=>{
+    if(f.visit) return false;
+    const d = diffDays(today, f.suggested);
+    return d!==null && d<-1;
+  }).length;
+  const followupDue = list.filter(f=>{
+    if(!f.followup6 || f.followup6.status !== 'pending') return false;
+    const d = followupDaysUntil(f);
+    return d !== null && d <= 0;
+  }).length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat"><div class="lbl">کل فارم‌ها</div><div class="val">${total}</div><div class="sub">در دسترس شما</div></div>
+    <div class="stat purple"><div class="lbl">غرب / شرق</div><div class="val">${west} / ${east}</div><div class="sub">${unassigned} تخصیص‌نیافته</div></div>
+    <div class="stat warn"><div class="lbl">بازدید امروز</div><div class="val">${todayVisits}</div><div class="sub">${overdue} عقب‌افتاده</div></div>
+    <div class="stat danger"><div class="lbl">پیگیری روز ۶</div><div class="val">${followupDue}</div><div class="sub">سررسید رسیده</div></div>
+  `;
+}
+
+function getFilteredFarms(){
+  let list = filterByUser(farms);
+  if(currentFilter.region === 'west') list = list.filter(f=>f.region==='west');
+  if(currentFilter.region === 'east') list = list.filter(f=>f.region==='east');
+  if(currentFilter.region === 'unassigned') list = list.filter(f=>!f.region);
+  if(currentFilter.search){
+    const q = currentFilter.search.toLowerCase();
+    list = list.filter(f=>
+      (f.code||'').toLowerCase().includes(q) ||
+      (f.name||'').toLowerCase().includes(q) ||
+      (f.province||'').toLowerCase().includes(q) ||
+      (f.house||'').toLowerCase().includes(q) ||
+      (f.breed||'').toLowerCase().includes(q)
+    );
+  }
+  if(currentFilter.status === 'pending') list = list.filter(f=>!f.visit);
+  if(currentFilter.status === 'visited') list = list.filter(f=>f.visit);
+  if(currentFilter.status === 'followup6') list = list.filter(f=>{
+    if(!f.followup6 || f.followup6.status !== 'pending') return false;
+    const d = followupDaysUntil(f);
+    return d !== null && d <= 0;
+  });
+  list.sort((a,b)=>{
+    const da = a.hatch ? jalaliToJDN(...a.hatch.split('/').map(Number)) : 0;
+    const db = b.hatch ? jalaliToJDN(...b.hatch.split('/').map(Number)) : 0;
+    return da - db;
+  });
+  return list;
+}
+
+function renderFarms(){
+  const list = getFilteredFarms();
+  const today = getToday();
+  const body = document.getElementById('farmsBody');
+  const cards = document.getElementById('mobileCards');
+
+  if(list.length === 0){
+    const empty = `<div class="empty"><div class="icon">🐣</div>فارمی یافت نشد</div>`;
+    body.innerHTML = `<tr><td colspan="11">${empty}</td></tr>`;
+    cards.innerHTML = empty;
+    return;
+  }
+
+  const regionChip = f => f.region==='west'
+    ? '<span class="chip west">غرب</span>'
+    : f.region==='east'
+    ? '<span class="chip east">شرق</span>'
+    : `<span class="chip none" onclick="openRegion('${f.id}')">تعیین</span>`;
+
+  const partsBadge = f => (f.partsCount && f.partsCount>1)
+    ? `<span class="chip parts">${f.partsCount} پارت</span>` : '';
+
+  const visitChip = f => {
+    const sug = f.suggested;
+    if(!sug) return '<span class="chip">—</span>';
+    if(f.visit) return `<span class="chip done">✅ <span class="jdate">${f.visit.date}</span></span>`;
+    const d = diffDays(today, sug);
+    if(d!==null && d<0) return `<span class="chip overdue">⚠️ <span class="jdate">${sug}</span></span>`;
+    if(d!==null && d<=1) return `<span class="chip due">🔔 <span class="jdate">${sug}</span></span>`;
+    return `<span class="chip"><span class="jdate">${sug}</span></span>`;
+  };
+
+  const followupDateChip = f => {
+    const due = getFollowupDue(f);
+    if(!due) return '<span class="chip">—</span>';
+    const fstat = f.followup6 && f.followup6.status;
+    if(fstat === 'done'){
+      const doneDate = f.followup6.date || due;
+      return `<span class="chip done">✅ <span class="jdate">${doneDate}</span></span>`;
+    }
+    const d = followupDaysUntil(f);
+    if(d !== null && d <= 0){
+      return `<span class="chip followup"><span class="jdate">${due}</span></span>`;
+    }
+    if(d === 1){
+      return `<span class="chip due">🔔 <span class="jdate">${due}</span></span>`;
+    }
+    return `<span class="chip info"><span class="jdate">${due}</span></span>`;
+  };
+
+  const statusChip = f => {
+    const fstat = f.followup6 && f.followup6.status;
+    const d = followupDaysUntil(f);
+    if(fstat === 'pending' && d !== null && d <= 0){
+      return `<span class="chip followup" onclick="openFollowup('${f.id}')" style="cursor:pointer">📊 پیگیری روز ۶</span>`;
+    }
+    if(fstat === 'done' && f.followup6.result === 'high')
+      return '<span class="chip overdue">⚠️ تلفات بالای ۲٪</span>';
+    if(fstat === 'done')
+      return '<span class="chip done">✅ پیگیری انجام شد</span>';
+    if(f.visit){
+      if(f.visit.result==='ok') return '<span class="chip done">✅ تایید جوجه‌ریزی</span>';
+      if(f.visit.result==='warn') return '<span class="chip due">🟡 هشدار</span>';
+      if(f.visit.result==='fail') return '<span class="chip overdue">❌ رد شد</span>';
+    }
+    return '<span class="chip">در انتظار بازدید</span>';
+  };
+
+  const actionBtns = f => {
+    let a = '';
+    const fstat = f.followup6 && f.followup6.status;
+    const d = followupDaysUntil(f);
+    if(!f.visit && f.hatch)
+      a += `<button class="btn btn-sm btn-acc" onclick="openVisit('${f.id}')">📝 بازدید</button>`;
+    if(fstat === 'pending' && d !== null && d <= 0)
+      a += `<button class="btn btn-sm btn-warn" onclick="openFollowup('${f.id}')">📊 پیگیری</button>`;
+    if(f.hatch)
+      a += `<button class="btn btn-sm btn-ghost" onclick="openMove('${f.id}')">📅</button>`;
+    a += `<button class="btn btn-sm btn-ghost" onclick="openRegion('${f.id}')">🗺</button>`;
+    return a;
+  };
+
+  body.innerHTML = list.map(f=>`
+    <tr>
+      <td>
+        <span class="fname" title="${f.name||''}">${partsBadge(f)}${f.name||'—'}</span>
+        <span class="fcode">${f.code||''}</span>
+      </td>
+      <td>${f.hatch ? `<span class="jdate">${f.hatch}</span>` : '<span class="chip overdue">خراب</span>'}</td>
+      <td>${(f.qty||0).toLocaleString('fa-IR')}</td>
+      <td>${f.house||'—'}</td>
+      <td>${f.breed||'—'}</td>
+      <td>${f.age||'—'}</td>
+      <td>${regionChip(f)}</td>
+      <td>${visitChip(f)}</td>
+      <td>${followupDateChip(f)}</td>
+      <td>${statusChip(f)}</td>
+      <td><div class="actions">${actionBtns(f)}</div></td>
+    </tr>
+  `).join('');
+
+  cards.innerHTML = list.map(f=>`
+    <div class="mcard">
+      <div class="mcard-head">
+        <div>
+          <div class="mcard-title">${partsBadge(f)}${f.name||'—'}</div>
+          <div class="mcard-code">${f.code||''}</div>
+        </div>
+        ${regionChip(f)}
+      </div>
+      <div class="mcard-row"><span class="k">تاریخ هچ</span><span class="v jdate">${f.hatch||'—'}</span></div>
+      <div class="mcard-row"><span class="k">تخصیص</span><span class="v">${(f.qty||0).toLocaleString('fa-IR')}</span></div>
+      <div class="mcard-row"><span class="k">جوجه‌کشی</span><span class="v">${f.house||'—'}</span></div>
+      <div class="mcard-row"><span class="k">نژاد</span><span class="v">${f.breed||'—'}</span></div>
+      <div class="mcard-row"><span class="k">سن گله</span><span class="v">${f.age||'—'}</span></div>
+      <div class="mcard-row"><span class="k">بازدید</span><span class="v">${visitChip(f)}</span></div>
+      <div class="mcard-row"><span class="k">پیگیری روز ۶</span><span class="v">${followupDateChip(f)}</span></div>
+      <div class="mcard-row"><span class="k">وضعیت</span><span class="v">${statusChip(f)}</span></div>
+      <div class="mcard-btns">${actionBtns(f)}</div>
+    </div>
+  `).join('');
+}
+
+function renderAlerts(){
+  const today = getToday();
+  const list = filterByUser(farms);
+  const alerts = [];
+
+  list.forEach(f=>{
+    if(!f.hatch) return;
+    if(f.visit) return;
+    const diff = diffDays(today, f.hatch);
+    if(diff === null) return;
+    if(diff >= -5 && diff <= 7){
+      let cls = 'soon', msg = '';
+      if(diff <= 4 && diff >= -1){
+        cls = 'urgent';
+        msg = diff<0 ? '🚨 بازدید عقب افتاده' : `⏰ ${diff} روز تا جوجه‌ریزی — بازدید کنید`;
+      } else if(diff > 4){
+        msg = `📅 ${diff} روز تا جوجه‌ریزی`;
+      } else {
+        cls = 'urgent';
+        msg = '🚨 بعد از جوجه‌ریزی — بازدید اولیه انجام نشده';
+      }
+      alerts.push({cls, farm:f, msg, type:'visit'});
+    }
+  });
+
+  list.forEach(f=>{
+    if(!f.hatch) return;
+    if(!f.followup6 || f.followup6.status !== 'pending') return;
+    const due = getFollowupDue(f);
+    const d = followupDaysUntil(f);
+    if(d === null) return;
+
+    if(d === 0){
+      alerts.push({
+        cls: 'followup',
+        farm: f,
+        msg: `📊 امروز روز ۶ از جوجه‌ریزی (<span class="jdate">${f.hatch}</span>) است — آمار تلفات را بگیرید`,
+        type: 'followup'
+      });
+    } else if(d < 0){
+      alerts.push({
+        cls: 'followup',
+        farm: f,
+        msg: `⚠️ پیگیری روز ۶ جوجه‌ریزی <span class="jdate">${f.hatch}</span> ${-d} روز عقب افتاده — فوری`,
+        type: 'followup'
+      });
+    } else if(d === 1){
+      alerts.push({
+        cls: 'soon',
+        farm: f,
+        msg: `⏰ فردا روز ۶ جوجه‌ریزی <span class="jdate">${f.hatch}</span> — آماده پیگیری`,
+        type: 'followup-soon'
+      });
+    }
+  });
+
+  document.getElementById('alertCount').textContent = alerts.length;
+  const c = document.getElementById('alertsList');
+  if(alerts.length===0){
+    c.innerHTML = '<div class="empty"><div class="icon">🎉</div>هشدار فعالی نیست</div>';
+    return;
+  }
+  c.innerHTML = alerts.map(a=>`
+    <div class="alert-item ${a.cls}">
+      <div class="info">
+        <b>${a.farm.name||a.farm.code}</b>
+        <span>${a.msg} — منطقه: ${a.farm.region==='west'?'غرب':a.farm.region==='east'?'شرق':'نامشخص'}</span>
+      </div>
+      <div style="display:flex;gap:6px">
+        ${a.type==='visit' ? `<button class="btn btn-sm btn-acc" onclick="openVisit('${a.farm.id}')">📝 بازدید</button>` : ''}
+        ${(a.type==='followup'||a.type==='followup-soon') ? `<button class="btn btn-sm btn-warn" onclick="openFollowup('${a.farm.id}')">📊 پیگیری</button>` : ''}
+        <button class="btn btn-sm btn-ghost" onclick="openMove('${a.farm.id}')">📅</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderHistory(){
+  document.getElementById('historyCount').textContent = sessions.length;
+  const c = document.getElementById('historyList');
+  if(sessions.length === 0 && (!currentSession || !currentSession.fileInfo)){
+    c.innerHTML = '<div class="empty"><div class="icon">📚</div>هنوز هفته‌ای در سابقه ثبت نشده است</div>';
+    return;
+  }
+  let html = '';
+  if(currentSession && currentSession.fileInfo){
+    html += `
+      <div class="session-item current">
+        <div class="session-head">
+          <h3>🟢 هفته فعال — ${currentSession.name}</h3>
+          <span class="chip done">در حال کار</span>
+        </div>
+        <div class="session-stats">
+          <span>📥 فایل: <b>${currentSession.fileInfo.name}</b></span>
+          <span>📅 آپلود: <b class="jdate">${currentSession.fileInfo.uploadedAt}</b></span>
+          <span>🏠 فارم: <b>${currentSession.fileInfo.farmsCount}</b></span>
+          <span>📝 رویداد: <b>${(currentSession.logs||[]).length}</b></span>
+        </div>
+        <div class="session-actions">
+          <button class="btn btn-sm btn-acc" onclick="commitCurrentWeek()">📚 ثبت در سابقه</button>
+        </div>
+        ${renderLogs(currentSession.logs || [])}
+      </div>
+    `;
+  }
+  sessions.forEach(s=>{
+    html += `
+      <div class="session-item">
+        <div class="session-head">
+          <h3>📚 ${s.name}</h3>
+          <span class="chip old">آرشیو</span>
+        </div>
+        <div class="session-stats">
+          <span>📥 فایل: <b>${s.fileInfo?.name || '—'}</b></span>
+          <span>📅 ثبت: <b class="jdate">${s.committedAt}</b></span>
+          <span>🏠 فارم: <b>${s.farmsCount}</b></span>
+          <span>📝 رویداد: <b>${(s.logs||[]).length}</b></span>
+        </div>
+        ${renderLogs(s.logs || [])}
+      </div>
+    `;
+  });
+  c.innerHTML = html;
+}
+function renderLogs(logs){
+  if(!logs.length) return '<div style="text-align:center;color:var(--muted);font-size:11px;padding:8px">هنوز رویدادی ثبت نشده</div>';
+  return `
+    <div class="log-list">
+      ${logs.slice().reverse().map(l=>`
+        <div class="log-item">
+          <span class="l-date">${l.date} ${l.time||''}</span>
+          <span class="l-type">${l.action}</span>
+          <span class="l-text">${l.details}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* =========================================================================
+   MODAL ACTIONS
+   ========================================================================= */
+function setDateDisplay(inputId, value){
+  const disp = document.getElementById(inputId + 'Display');
+  const input = document.getElementById(inputId);
+  input.value = value || '';
+  if(disp){
+    if(value){ disp.textContent = value; disp.classList.remove('empty'); }
+    else { disp.textContent = 'انتخاب تاریخ'; disp.classList.add('empty'); }
+  }
+}
+
+function openVisit(id){
+  const f = farms.find(x=>x.id===id);
+  if(!f) return;
+  editing.visitId = id;
+  document.getElementById('visitFarmName').innerHTML =
+    `<b>${f.name||''}</b><br><code style="font-size:11px;color:var(--muted)">${f.code}</code><br>
+     تاریخ هچ: <b class="jdate">${f.hatch}</b> — بازدید پیشنهادی (۳ روز قبل): <b class="jdate">${f.suggested}</b>`;
+  setDateDisplay('visitDate', getToday());
+  document.getElementById('visitResult').value = 'ok';
+  document.getElementById('visitNote').value = '';
+  document.getElementById('visitModal').classList.add('show');
+}
+function saveVisit(){
+  const f = farms.find(x=>x.id===editing.visitId);
+  if(!f) return;
+  const dateVal = fixJalali(document.getElementById('visitDate').value);
+  if(!dateVal){ toast('❌ تاریخ را انتخاب کنید'); return; }
+  const result = document.getElementById('visitResult').value;
+  f.visit = { date: dateVal, result, note: document.getElementById('visitNote').value };
+  const resultTxt = result==='ok'?'✅ تایید':result==='warn'?'🟡 هشدار':'❌ رد شد';
+  addLog('بازدید', `«${f.name}» بازدید شد — نتیجه: ${resultTxt} — تاریخ: ${dateVal}`);
+  save(); closeModal('visitModal'); toast('✅ بازدید ثبت شد'); render();
+}
+
+function openFollowup(id){
+  const f = farms.find(x=>x.id===id);
+  if(!f) return;
+  editing.followupId = id;
+  const due = getFollowupDue(f);
+  const visitInfo = f.visit ? `تاریخ بازدید: <b class="jdate">${f.visit.date}</b><br>` : '';
+  document.getElementById('followupFarmName').innerHTML =
+    `<b>${f.name||''}</b><br><code style="font-size:11px;color:var(--muted)">${f.code}</code><br>
+     تاریخ هچ (مبنا): <b class="jdate">${f.hatch}</b><br>
+     ${visitInfo}روز ۶ (هچ + ۶ روز): <b class="jdate">${due}</b>`;
+  setDateDisplay('followupDate', getToday());
+  document.getElementById('followupDeadPct').value = '';
+  document.getElementById('followupResult').value = 'ok';
+  document.getElementById('followupNote').value = '';
+  document.getElementById('followupModal').classList.add('show');
+}
+function saveFollowup(){
+  const f = farms.find(x=>x.id===editing.followupId);
+  if(!f) return;
+  const dateVal = fixJalali(document.getElementById('followupDate').value);
+  if(!dateVal){ toast('❌ تاریخ را انتخاب کنید'); return; }
+  const result = document.getElementById('followupResult').value;
+  const pct = parseFloat(document.getElementById('followupDeadPct').value) || 0;
+  f.followup6 = { status: 'done', result, deadPct: pct, date: dateVal, note: document.getElementById('followupNote').value };
+  const resultTxt = result==='ok'?'تلفات نرمال':result==='high'?'تلفات بالای ۲٪':'تلفات بسیار بالا';
+  addLog('پیگیری روز ۶', `«${f.name}» — تلفات ${pct}٪ — ${resultTxt}`);
+  save(); closeModal('followupModal');
+  if(result === 'ok') toast('✅ پیگیری روز ۶ — تلفات نرمال');
+  else if(result === 'high') toast('⚠️ تلفات بالای ۲٪');
+  else toast('🚨 تلفات بسیار بالا — ارجاع فوری');
+  render();
+}
+
+function openRegion(id){
+  const f = farms.find(x=>x.id===id);
+  if(!f) return;
+  editing.regionId = id;
+  document.getElementById('regionFarmName').innerHTML =
+    `<b>${f.name||''}</b><br><code style="font-size:11px;color:var(--muted)">${f.code}</code>`;
+  document.getElementById('regionSelect').value = f.region || '';
+  document.getElementById('regionModal').classList.add('show');
+}
+function saveRegion(){
+  const f = farms.find(x=>x.id===editing.regionId);
+  if(!f) return;
+  f.region = document.getElementById('regionSelect').value || null;
+  const rTxt = f.region==='west'?'غرب':f.region==='east'?'شرق':'حذف شد';
+  addLog('تعیین منطقه', `«${f.name}» → ${rTxt}`);
+  save(); closeModal('regionModal'); toast('🗺 منطقه ذخیره شد'); render();
+}
+
+function openMove(id){
+  const f = farms.find(x=>x.id===id);
+  if(!f) return;
+  editing.moveId = id;
+  document.getElementById('moveFarmName').innerHTML =
+    `<b>${f.name||''}</b><br><code style="font-size:11px;color:var(--muted)">${f.code}</code>`;
+  setDateDisplay('moveDate', f.suggested || suggestVisitDate(f.hatch));
+  document.getElementById('moveModal').classList.add('show');
+}
+function saveMove(){
+  const f = farms.find(x=>x.id===editing.moveId);
+  if(!f) return;
+  const d = fixJalali(document.getElementById('moveDate').value);
+  if(!d){ toast('❌ تاریخ را انتخاب کنید'); return; }
+  const oldDate = f.suggested;
+  f.suggested = d;
+  f.moveReason = document.getElementById('moveReason').value;
+  addLog('جابجایی', `«${f.name}» از ${oldDate} به ${d}`);
+  save(); closeModal('moveModal'); toast('📅 به‌روز شد'); render();
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+/* =========================================================================
+   IMPORT
+   ========================================================================= */
+document.getElementById('fileInput').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = evt=>{
+    const data = new Uint8Array(evt.target.result);
+    const wb = XLSX.read(data, {type:'array', cellDates:true, raw:false});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
+    parseRows(rows, file.name);
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function extractPartNumber(name){
+  if(!name) return {base:'', part:0};
+  let part = 0;
+  const patterns = [
+    /پارت\s*[\(\-]?\s*(\d+)\s*[\)]?/i,
+    /فارم\s*شماره\s*[\(\-]?\s*(\d+)\s*[\)]?/i,
+    /قسمت\s*(\d+)/i,
+  ];
+  for(const p of patterns){
+    const m = name.match(p);
+    if(m){ part = parseInt(m[1]); break; }
+  }
+  let base = name
+    .replace(/\s*[-–]?\s*پارت\s*[\(\-]?\s*\d+\s*[\)]?/gi, '')
+    .replace(/\s*[-–]?\s*فارم\s*شماره\s*[\(\-]?\s*\d+\s*[\)]?/gi, '')
+    .replace(/\s*[-–]?\s*قسمت\s*\d+/gi, '')
+    .replace(/\s+/g,' ').trim();
+  return {base, part};
+}
+function looksLikeFarmCode(str){
+  if(!str) return false;
+  return /^[A-Z]{2}\d{3,}$/i.test(String(str).trim());
+}
+function detectFarmColumns(header, rows){
+  let codeIdx = -1, nameIdx = -1;
+  for(let i=0;i<header.length;i++){
+    const h = String(header[i]).trim();
+    if(/^کد\s*فارم$/i.test(h)) codeIdx = i;
+    if(/^(فارم|نام\s*فارم)$/i.test(h) && !/کد/i.test(h)) nameIdx = i;
+  }
+  if(codeIdx < 0 || nameIdx < 0){
+    for(let i=0;i<header.length;i++){
+      const h = String(header[i]).trim();
+      if(/کد/i.test(h) && codeIdx < 0) codeIdx = i;
+      if(/فارم|نام/i.test(h) && !/کد/i.test(h) && nameIdx < 0) nameIdx = i;
+    }
+  }
+  if(codeIdx < 0 || nameIdx < 0){
+    const sample = rows.slice(1, 8).filter(r=>r && r.length);
+    for(let col=0; col<header.length; col++){
+      let codeVotes = 0, nameVotes = 0;
+      sample.forEach(r=>{
+        const v = String(r[col]||'').trim();
+        if(!v) return;
+        if(looksLikeFarmCode(v)) codeVotes++;
+        else if(v.length > 10) nameVotes++;
+      });
+      if(codeVotes >= 3 && codeIdx < 0) codeIdx = col;
+      else if(nameVotes >= 3 && nameIdx < 0 && col !== codeIdx) nameIdx = col;
+    }
+  }
+  return { codeIdx, nameIdx };
+}
+function findIdxByNames(header, names){
+  for(let i=0;i<header.length;i++){
+    const h = String(header[i]).replace(/\s+/g,' ').trim();
+    for(const n of names){
+      if(h === n || h.includes(n)) return i;
+    }
+  }
+  return -1;
+}
+
+function parseRows(rows, fileName){
+  if(rows.length < 2){ toast('❌ فایل خالی'); return; }
+  const header = rows[0].map(h=>String(h).trim());
+  const { codeIdx, nameIdx } = detectFarmColumns(header, rows);
+  if(nameIdx < 0){ toast('❌ ستون «نام فارم» پیدا نشد'); return; }
+
+  const idx = {
+    code: codeIdx,
+    name: nameIdx,
+    province: findIdxByNames(header, ['استان']),
+    hatch: findIdxByNames(header, ['تاریخ هچ']),
+    qty: findIdxByNames(header, ['تخصیص به فارم','تخصیص']),
+    house: findIdxByNames(header, ['جوجه کشی','جوجه‌کشی']),
+    houseProvince: findIdxByNames(header, ['استان جوجه کشی','استان جوجه‌کشی']),
+    breed: findIdxByNames(header, ['نژاد']),
+    age: findIdxByNames(header, ['سن گله','سن']),
+  };
+  if(idx.hatch < 0){ toast('❌ ستون «تاریخ هچ» پیدا نشد'); return; }
+
+  const raw = [];
+  let failedDates = 0;
+  for(let i=1;i<rows.length;i++){
+    const r = rows[i];
+    if(!r) continue;
+    const codeVal = idx.code >= 0 ? String(r[idx.code]||'').trim() : '';
+    const nameVal = String(r[idx.name]||'').trim();
+    if(!codeVal && !nameVal) continue;
+    const hatch = excelDateToJalali(r[idx.hatch]);
+    if(!hatch){
+      console.warn('⚠️ تاریخ نامعتبر در ردیف ' + i + ':', r[idx.hatch]);
+      failedDates++;
+      continue;
+    }
+    const fullName = nameVal || codeVal;
+    const { base, part } = extractPartNumber(fullName);
+
+    raw.push({
+      code: codeVal || fullName.split(' ')[0] || '—',
+      name: fullName,
+      base, part,
+      province: idx.province>=0 ? String(r[idx.province]||'').trim() : '',
+      hatch,
+      qty: idx.qty>=0 ? (Number(String(r[idx.qty]||'0').replace(/[,\s]/g,'')) || 0) : 0,
+      house: idx.house>=0 ? String(r[idx.house]||'').trim() : '',
+      houseProvince: idx.houseProvince>=0 ? String(r[idx.houseProvince]||'').trim() : '',
+      breed: idx.breed>=0 ? String(r[idx.breed]||'').trim() : '',
+      age: idx.age>=0 ? String(r[idx.age]||'').trim() : '',
+    });
+  }
+
+  const groups = {};
+  raw.forEach(r=>{
+    const key = `${r.code}__${r.base || r.name}`;
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(r);
+  });
+
+  let added = 0, updated = 0, merged = 0;
+  Object.values(groups).forEach(group=>{
+    group.sort((a,b)=> (a.part||99) - (b.part||99));
+    const main = group[0];
+    const partsCount = group.length;
+    const totalQty = group.reduce((s,x)=>s + x.qty, 0);
+
+    const rec = {
+      id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      code: main.code,
+      name: main.name,
+      baseName: main.base || main.name,
+      partsCount,
+      province: main.province,
+      hatch: main.hatch,
+      qty: totalQty,
+      house: main.house,
+      houseProvince: main.houseProvince,
+      breed: main.breed,
+      age: main.age,
+      region: null,
+      suggested: suggestVisitDate(main.hatch),
+      visit: null,
+      followup6: { status:'pending' },
+      parts: group.map(p=>({name:p.name, qty:p.qty, hatch:p.hatch})),
+    };
+
+    const exist = farms.find(f=>f.code===rec.code && (f.baseName||f.name)===rec.baseName);
+    if(exist){
+      Object.assign(exist, {
+        name: rec.name, partsCount: rec.partsCount, parts: rec.parts,
+        qty: rec.qty, house: rec.house, breed: rec.breed, age: rec.age,
+        hatch: rec.hatch, suggested: rec.suggested,
+        followup6: exist.followup6 || rec.followup6,
+      });
+      updated++;
+    } else {
+      farms.push(rec);
+      added++;
+    }
+    if(partsCount > 1) merged++;
+  });
+
+  save();
+
+  if(!currentSession) startNewSession('هفته ' + todayJalali());
+  registerFileUpload(fileName || 'فایل اکسل', farms.length);
+
+  document.getElementById('importStatus').innerHTML =
+    `✅ ${added} فارم جدید &nbsp;|&nbsp; 🔄 ${updated} به‌روزرسانی &nbsp;|&nbsp; 🔗 ${merged} گروه ادغام‌شده
+     ${failedDates > 0 ? `<br><span style="color:var(--danger)">⚠️ ${failedDates} ردیف با تاریخ نامعتبر رد شد (Console را چک کنید)</span>` : ''}<br>
+     <span style="color:var(--acc)">📚 حالا در داشبورد دکمه «ثبت هفته در سابقه» را بزن</span>`;
+  toast(`📥 ${added} فارم ثبت شد`);
+  render();
+}
+
+/* =========================================================================
+   DEMO
+   ========================================================================= */
+function loadDemoData(){
+  if(farms.length > 0){
+    if(!confirm('داده‌های فعلی جایگزین شوند؟')) return;
+  }
+  farms = [];
+  const demo = [
+    ['BR0834','فارم مرغ گوشتی عبدالستار قوانج زاده-پارت1','گلستان','2026/10/17','19500','پرینه نور','گلستان','سپیدمرغ ابهر','کاب','67'],
+    ['BR1012','فارم مرغ گوشتی محمد کریم صالحی','گلستان','2026/10/17','25500','میرزاکوچک','گلستان','سراب','کاب','56'],
+    ['BR1034','فارم مرغ گوشتی پیمان محمودنیا- فارم شماره (2)','گلستان','2026/10/17','58500','آسمان','گلستان','لاله 1','راس','32'],
+    ['BR0202','فارم مرغ گوشتی شرکت یادگار مرغ ققنوس','گلستان','2026/10/18','35500','پرینه نور','گلستان','لاله 1','راس','32'],
+    ['BR0834','فارم مرغ گوشتی عبدالستار قوانج زاده-پارت2','گلستان','2026/10/18','20000','آسمان','گلستان','آریا جوجه','کاب','67'],
+    ['BR0834','فارم مرغ گوشتی عبدالستار قوانج زاده-پارت3','گلستان','2026/10/18','22000','آسمان','گلستان','آق قلا','کاب','67'],
+    ['BR0525','فارم مرغ گوشتی مرتضی قربانی','گلستان','2026/10/20','19000','پرینه نور','گلستان','سپیدمرغ ابهر','کاب','67'],
+    ['BR0704','فارم مرغ گوشتی فردوس گنبد-پارت1','گلستان','2026/10/20','19000','آسمان','گلستان','تک پروران','کاب','55'],
+    ['BR0704','فارم مرغ گوشتی فردوس گنبد-پارت2','گلستان','2026/10/20','30000','مامک شمال','گلستان','نعیما','کاب','52'],
+    ['BR0412','فارم مرغ گوشتی هدیه صفای زرین-پارت1','گلستان','2026/10/21','24000','پرهام','گلستان','برایند 2','کاب','58'],
+    ['BR0412','فارم مرغ گوشتی هدیه صفای زرین-پارت2','گلستان','2026/10/21','36000','مامک شمال','گلستان','برایند 1','کاب','60'],
+  ];
+  const header = ['کد فارم','فارم','استان','تاریخ هچ','تخصیص به فارم','جوجه کشی','استان جوجه کشی','نژاد','نژاد2','سن گله(هفته)'];
+  parseRows([header, ...demo], 'داده_نمونه.xlsx');
+}
+
+function clearAllData(){
+  if(!confirm('همه داده‌ها و سابقه پاک شود؟')) return;
+  farms = []; sessions = []; currentSession = null;
+  save(); saveSessions(); saveCurrentSession();
+  render(); toast('🗑 همه داده‌ها پاک شد');
+}
+
+/* =========================================================================
+   TOAST
+   ========================================================================= */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+/* =========================================================================
+   EVENTS
+   ========================================================================= */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('[id^="tab-"]').forEach(c=>c.style.display='none');
+    tab.classList.add('active');
+    document.getElementById('tab-'+tab.dataset.tab).style.display='block';
+  });
+});
+document.getElementById('searchInput').addEventListener('input', e=>{
+  currentFilter.search = e.target.value; renderFarms();
+});
+document.getElementById('regionFilter').addEventListener('change', e=>{
+  currentFilter.region = e.target.value; renderFarms();
+});
+document.getElementById('statusFilter').addEventListener('change', e=>{
+  currentFilter.status = e.target.value; renderFarms();
+});
+document.getElementById('currentUser').addEventListener('change', ()=>render());
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click', e=>{ if(e.target===o) o.classList.remove('show'); });
+});
+document.getElementById('calOverlay').addEventListener('click', e=>{
+  if(e.target.id === 'calOverlay') closeCalendar();
+});
+
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
