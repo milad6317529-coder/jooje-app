@@ -10,9 +10,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>سامانه مدیریت جوجه‌ریزی</title>
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{
   --bg:#0b1220; --bg2:#111a2e; --card:#16213a; --card2:#1c2a48; --line:#25365c;
@@ -81,6 +84,7 @@ select:focus,input:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0
 .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
 .btn-ghost:hover{border-color:var(--acc);color:var(--acc)}
 .btn-sm{padding:6px 10px;font-size:11px;border-radius:9px}
+.btn-mail{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.35)}
 
 .import-banner{
   background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(239,68,68,.1));
@@ -111,7 +115,7 @@ select:focus,input:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0
 .table-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px}
 .table-scroll::-webkit-scrollbar-thumb:hover{background:var(--acc)}
 
-table{width:100%;border-collapse:collapse;font-size:13px;min-width:1350px}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:1450px}
 thead{background:var(--card2);position:sticky;top:0;z-index:2}
 th{text-align:right;padding:13px 10px;font-weight:700;font-size:12px;color:var(--muted);
   border-bottom:1px solid var(--line);white-space:nowrap;}
@@ -167,6 +171,7 @@ tbody tr:last-child td{border-bottom:none}
   border:1px solid var(--line);border-radius:20px;max-width:600px;width:100%;
   padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:pop .25s;
   max-height:92vh;overflow-y:auto;}
+.modal.wide{max-width:820px}
 @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 .modal h2{font-size:17px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .modal .sub{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.8}
@@ -185,7 +190,55 @@ tbody tr:last-child td{border-bottom:none}
 .date-field .val{flex:1;font-family:'Vazirmatn',monospace;direction:ltr;text-align:right;font-weight:600}
 .date-field .val.empty{color:var(--muted);font-family:'Vazirmatn',sans-serif;font-weight:400}
 
-/* ===== CALENDAR — RESPONSIVE ===== */
+/* ===== REPORT PREVIEW ===== */
+#reportPreviewArea{
+  background:#fff;color:#111;border-radius:12px;padding:24px;
+  font-size:13px;line-height:1.9;direction:rtl;text-align:right;
+  max-height:60vh;overflow-y:auto;
+}
+#reportPreviewArea .rp-header{
+  text-align:center;margin-bottom:18px;padding-bottom:14px;
+  border-bottom:2px solid #00a882;
+}
+#reportPreviewArea .rp-header .rp-title{font-size:16px;font-weight:800;color:#006a52}
+#reportPreviewArea .rp-header .rp-sub{font-size:12px;color:#555;margin-top:4px}
+#reportPreviewArea .rp-meta{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;
+  background:#f5f9fc;padding:12px;border-radius:8px;margin-bottom:16px;
+  font-size:12px;
+}
+#reportPreviewArea .rp-meta b{color:#006a52}
+#reportPreviewArea .rp-section{margin-bottom:14px}
+#reportPreviewArea .rp-section h4{
+  font-size:13px;color:#006a52;font-weight:800;margin-bottom:6px;
+  border-right:3px solid #00a882;padding-right:8px;
+}
+#reportPreviewArea table{width:100%;border-collapse:collapse;font-size:11px;min-width:auto;direction:rtl}
+#reportPreviewArea table th{
+  background:#00a882;color:#fff;padding:7px;text-align:right;font-size:11px;font-weight:700;
+  border:1px solid #00a882;white-space:normal;
+}
+#reportPreviewArea table td{
+  padding:6px 7px;border:1px solid #d8e2ea;text-align:right;color:#222;font-size:11px;
+}
+#reportPreviewArea table tr:nth-child(even) td{background:#f5f9fc}
+#reportPreviewArea .rp-footer{
+  margin-top:16px;padding-top:12px;border-top:1px solid #ccc;
+  font-size:11px;color:#555;text-align:center;
+}
+#reportPreviewArea .stat-row{
+  display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;
+}
+#reportPreviewArea .stat-box{
+  flex:1;min-width:100px;background:#f5f9fc;border-radius:8px;padding:10px;text-align:center;
+  border-right:3px solid #00a882;
+}
+#reportPreviewArea .stat-box .n{font-size:20px;font-weight:800;color:#006a52}
+#reportPreviewArea .stat-box .l{font-size:10px;color:#666;margin-top:2px}
+#reportPreviewArea .ok-tag{color:#16a34a;font-weight:700}
+#reportPreviewArea .no-tag{color:#dc2626;font-weight:700}
+
+/* ===== CALENDAR ===== */
 .cal-overlay{
   position:fixed;inset:0;background:rgba(5,10,20,.85);backdrop-filter:blur(8px);
   display:none;align-items:center;justify-content:center;padding:10px;z-index:1100;
@@ -200,14 +253,8 @@ tbody tr:last-child td{border-bottom:none}
   animation:pop .25s;
   margin:auto;
 }
-.cal-header{
-  display:flex;justify-content:space-between;align-items:center;
-  margin-bottom:12px;gap:6px;
-}
-.cal-title{
-  font-size:15px;font-weight:800;color:var(--acc);
-  white-space:nowrap;
-}
+.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:6px;}
+.cal-title{font-size:15px;font-weight:800;color:var(--acc);white-space:nowrap;}
 .cal-nav{display:flex;gap:6px;flex-shrink:0}
 .cal-nav button{
   width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
@@ -216,68 +263,30 @@ tbody tr:last-child td{border-bottom:none}
 }
 .cal-nav button:hover{background:var(--acc);color:#04121a;border-color:var(--acc)}
 .cal-nav button:active{transform:scale(.92)}
-
-.cal-weekdays{
-  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px;
-}
-.cal-weekdays div{
-  text-align:center;font-size:10px;font-weight:700;color:var(--muted);
-  padding:4px 0;
-}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px;}
+.cal-weekdays div{text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:4px 0;}
 .cal-weekdays div.friday{color:#f87171}
-
-.cal-days{
-  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;
-}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
 .cal-day{
-  aspect-ratio:1;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:8px;
-  cursor:pointer;font-size:12px;font-weight:600;
-  border:1px solid transparent;
-  transition:.15s;
-  background:transparent;color:var(--txt);
-  -webkit-tap-highlight-color:transparent;
-  user-select:none;
-  min-width:0;
-  min-height:0;
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;
+  border:1px solid transparent;transition:.15s;background:transparent;color:var(--txt);
+  -webkit-tap-highlight-color:transparent;user-select:none;min-width:0;min-height:0;
 }
-.cal-day:hover:not(.empty):not(.disabled){
-  background:rgba(0,212,170,.15);border-color:rgba(0,212,170,.4);
-}
-.cal-day:active:not(.empty):not(.disabled){
-  transform:scale(.92);
-}
+.cal-day:hover:not(.empty):not(.disabled){background:rgba(0,212,170,.15);border-color:rgba(0,212,170,.4);}
+.cal-day:active:not(.empty):not(.disabled){transform:scale(.92);}
 .cal-day.empty{visibility:hidden;pointer-events:none}
 .cal-day.today{border-color:var(--acc2);color:#7fb0ff;font-weight:800}
-.cal-day.selected{
-  background:linear-gradient(135deg,var(--acc),#0891b2);
-  color:#04121a;font-weight:800;
-  box-shadow:0 4px 14px rgba(0,212,170,.4);
-}
+.cal-day.selected{background:linear-gradient(135deg,var(--acc),#0891b2);color:#04121a;font-weight:800;box-shadow:0 4px 14px rgba(0,212,170,.4);}
 .cal-day.friday{color:#f87171}
 .cal-day.friday.selected{color:#04121a}
-
-.cal-footer{
-  display:flex;justify-content:space-between;align-items:center;
-  margin-top:12px;gap:6px;flex-wrap:wrap;
-}
-.cal-footer .preview{
-  font-size:11px;color:var(--muted);font-family:monospace;direction:ltr;
-  flex:1;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
+.cal-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:6px;flex-wrap:wrap;}
+.cal-footer .preview{font-size:11px;color:var(--muted);font-family:monospace;direction:ltr;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cal-footer .preview b{color:var(--acc);font-size:12px}
-.cal-close{
-  padding:7px 14px;border-radius:9px;border:1px solid var(--line);
-  background:transparent;color:var(--txt);cursor:pointer;
-  font-family:inherit;font-size:11px;font-weight:700;
-  flex-shrink:0;
-}
+.cal-close{padding:7px 14px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--txt);cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;flex-shrink:0;}
 .cal-close:hover{border-color:var(--acc);color:var(--acc)}
 .cal-close:active{transform:scale(.95)}
 
-/* 📱 ریسپانسیو برای گوشی‌های کوچک */
 @media(max-width:400px){
   .calendar{padding:10px;border-radius:16px;max-width:100%}
   .cal-header{margin-bottom:8px}
@@ -292,8 +301,6 @@ tbody tr:last-child td{border-bottom:none}
   .cal-footer .preview b{font-size:11px}
   .cal-close{padding:6px 10px;font-size:10px}
 }
-
-/* 📱 گوشی‌های خیلی کوچک (<360px) */
 @media(max-width:360px){
   .cal-overlay{padding:6px}
   .calendar{padding:8px}
@@ -304,16 +311,9 @@ tbody tr:last-child td{border-bottom:none}
   .cal-days{gap:1.5px}
   .cal-weekdays{gap:1.5px}
 }
-
-/* 🔄 حالت افقی (landscape) */
 @media(max-height:500px) and (orientation:landscape){
   .cal-overlay{padding:4px;align-items:flex-start}
-  .calendar{
-    max-width:340px;padding:8px;
-    display:flex;flex-direction:column;
-    max-height:calc(100vh - 8px);
-    overflow-y:auto;
-  }
+  .calendar{max-width:340px;padding:8px;display:flex;flex-direction:column;max-height:calc(100vh - 8px);overflow-y:auto;}
   .cal-header{margin-bottom:6px}
   .cal-title{font-size:12px}
   .cal-nav button{width:26px;height:26px;font-size:11px}
@@ -354,29 +354,16 @@ tbody tr:last-child td{border-bottom:none}
   border-color:rgba(0,212,170,.6);
   background:linear-gradient(135deg,rgba(0,212,170,.1),rgba(59,130,246,.05));
 }
-.session-head{
-  display:flex;justify-content:space-between;align-items:center;gap:10px;
-  margin-bottom:10px;flex-wrap:wrap;
-}
+.session-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
 .session-head h3{font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
 .session-stats{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:10px}
 .session-stats b{color:var(--txt);font-weight:700}
 .session-actions{display:flex;gap:6px;flex-wrap:wrap}
-.log-list{
-  max-height:280px;overflow-y:auto;margin-top:10px;padding-top:10px;
-  border-top:1px solid rgba(37,54,92,.6);
-}
-.log-item{
-  display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
-  padding:8px 10px;border-radius:10px;background:rgba(11,18,32,.5);
-  margin-bottom:6px;font-size:11px;flex-wrap:wrap;
-}
+.log-list{max-height:280px;overflow-y:auto;margin-top:10px;padding-top:10px;border-top:1px solid rgba(37,54,92,.6);}
+.log-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:10px;background:rgba(11,18,32,.5);margin-bottom:6px;font-size:11px;flex-wrap:wrap;}
 .log-item .l-date{color:var(--acc);font-weight:700;font-family:monospace;direction:ltr;min-width:90px}
 .log-item .l-text{flex:1;color:var(--txt);line-height:1.6}
-.log-item .l-type{
-  padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;
-  background:rgba(59,130,246,.15);color:#7fb0ff;white-space:nowrap;
-}
+.log-item .l-type{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(59,130,246,.15);color:#7fb0ff;white-space:nowrap;}
 
 footer{
   text-align:center; padding:24px 12px 8px; margin-top:18px;
@@ -410,6 +397,7 @@ footer b{ color:var(--acc); font-weight:700; }
   <div class="tabs">
     <div class="tab active" data-tab="dashboard">📊 داشبورد</div>
     <div class="tab" data-tab="alerts">🔔 هشدارها <span class="badge" id="alertCount">0</span></div>
+    <div class="tab" data-tab="reports">📄 گزارش‌ها</div>
     <div class="tab" data-tab="history">📚 سابقه <span class="badge" id="historyCount">0</span></div>
     <div class="tab" data-tab="import">📥 بارگذاری اکسل</div>
   </div>
@@ -472,6 +460,32 @@ footer b{ color:var(--acc); font-weight:700; }
       <strong style="font-size:14px">🔔 هشدارها و پیگیری‌های فعال</strong>
     </div>
     <div id="alertsList"></div>
+  </div>
+
+  <div id="tab-reports" style="display:none">
+    <div class="toolbar" style="flex-wrap:wrap">
+      <strong style="font-size:14px">📄 گزارش‌ها</strong>
+      <select id="reportScope" style="margin-right:auto">
+        <option value="all">همه فارم‌ها</option>
+        <option value="visited">فقط بازدید شده</option>
+        <option value="notVisited">فقط بازدید نشده</option>
+        <option value="followup">فقط پیگیری روز ۶</option>
+        <option value="problem">فقط مشکل‌دار / رد شده</option>
+      </select>
+      <button class="btn btn-acc" onclick="openReportPreview()">📊 پیش‌نمایش گزارش</button>
+    </div>
+    <div class="tablebox" style="padding:22px">
+      <h2 style="font-size:15px;margin-bottom:10px">📋 راهنمای گزارش</h2>
+      <p style="font-size:12px;color:var(--muted);line-height:2">
+        با کلیک روی <b style="color:var(--acc)">«پیش‌نمایش گزارش»</b> می‌توانید:
+      </p>
+      <ul style="font-size:12px;color:var(--muted);line-height:2.2;margin-right:20px;margin-top:8px">
+        <li>📊 خلاصه آمار کلی (تعداد کل، بازدید شده، در انتظار، پیگیری معوق)</li>
+        <li>📋 جدول کامل فارم‌ها با تمام اطلاعات (کد، نام، تاریخ‌ها، وضعیت)</li>
+        <li>💾 خروجی PDF تمیز با هدر و پاورقی رسمی</li>
+        <li>📱 امکان پرینت یا ذخیره روی گوشی</li>
+      </ul>
+    </div>
   </div>
 
   <div id="tab-history" style="display:none">
@@ -603,6 +617,42 @@ footer b{ color:var(--acc); font-weight:700; }
   </div>
 </div>
 
+<!-- REPORT PREVIEW MODAL -->
+<div class="overlay" id="reportModal">
+  <div class="modal wide">
+    <h2>📊 پیش‌نمایش گزارش</h2>
+    <div class="sub">پیش‌نمایش زیر را بررسی کنید. در صورت تایید، PDF دانلود می‌شود.</div>
+    <div id="reportPreviewArea"></div>
+    <div class="modal-actions">
+      <button class="btn btn-acc" onclick="downloadReportPDF()">💾 دانلود PDF</button>
+      <button class="btn btn-blue" onclick="printReport()">🖨 پرینت</button>
+      <button class="btn btn-ghost" onclick="closeModal('reportModal')">بستن</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL PREVIEW MODAL -->
+<div class="overlay" id="emailModal">
+  <div class="modal">
+    <h2>📧 ارسال گزارش بازدید</h2>
+    <div class="sub" id="emailFarmInfo"></div>
+    <div class="field"><label>ایمیل گیرنده</label>
+      <input type="email" id="emailTo" placeholder="habibi@example.com">
+    </div>
+    <div class="field"><label>موضوع</label>
+      <input type="text" id="emailSubject">
+    </div>
+    <div class="field"><label>متن نامه (قابل ویرایش)</label>
+      <textarea id="emailBody" rows="14" style="font-size:12px;line-height:1.9"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-mail" onclick="sendEmail()">📧 باز کردن ایمیل</button>
+      <button class="btn btn-blue" onclick="copyEmailText()">📋 کپی متن</button>
+      <button class="btn btn-ghost" onclick="closeModal('emailModal')">انصراف</button>
+    </div>
+  </div>
+</div>
+
 <div class="cal-overlay" id="calOverlay">
   <div class="calendar">
     <div class="cal-header">
@@ -631,21 +681,21 @@ footer b{ color:var(--acc); font-weight:700; }
 
 <script>
 /* =========================================================================
-   🧹 پاک‌سازی خودکار داده‌های خراب نسخه‌های قبلی
+   🧹 پاک‌سازی داده‌های نسخه‌های قدیمی
    ========================================================================= */
 (function cleanupOldVersions(){
-  if(localStorage.getItem('jooje_v9_migrated')) return;
+  if(localStorage.getItem('jooje_v11_migrated')) return;
   const oldKeys = [
-    'jooje_farms_v4','jooje_farms_v5','jooje_farms_v6','jooje_farms_v7','jooje_farms_v8',
-    'jooje_sessions_v1','jooje_sessions_v2','jooje_sessions_v3',
-    'jooje_current_session_v1','jooje_current_session_v2','jooje_current_session_v3'
+    'jooje_farms_v4','jooje_farms_v5','jooje_farms_v6','jooje_farms_v7','jooje_farms_v8','jooje_farms_v9','jooje_farms_v10',
+    'jooje_sessions_v1','jooje_sessions_v2','jooje_sessions_v3','jooje_sessions_v4','jooje_sessions_v5',
+    'jooje_current_session_v1','jooje_current_session_v2','jooje_current_session_v3','jooje_current_session_v4','jooje_current_session_v5'
   ];
   oldKeys.forEach(k => localStorage.removeItem(k));
-  localStorage.setItem('jooje_v9_migrated','1');
+  localStorage.setItem('jooje_v11_migrated','1');
 })();
 
 /* =========================================================================
-   JALALI CORE — الگوریتم دقیق jalaali-js
+   JALALI CORE
    ========================================================================= */
 const FA='۰۱۲۳۴۵۶۷۸۹', AR='٠١٢٣٤٥٦٧٨٩';
 function pad2(n){ return String(n).padStart(2,'0'); }
@@ -653,7 +703,6 @@ function toEnglishDigits(s){
   return String(s).replace(/[۰-۹]/g,c=>FA.indexOf(c)).replace(/[٠-٩]/g,c=>AR.indexOf(c));
 }
 function div(a, b){ return Math.trunc(a / b); }
-
 function g2d(gy, gm, gd){
   let d = div((gy + div(gm - 8, 6) + 100100) * 1461, 4)
         + div(153 * ((gm + 9) % 12) + 2, 5)
@@ -723,9 +772,7 @@ function jalaliToGregorian(jy, jm, jd){ return d2g(j2d(jy, jm, jd)); }
 function fixJalali(raw){
   if(!raw) return '';
   let s = toEnglishDigits(String(raw))
-    .replace(/[^\d\/]/g, '/')
-    .replace(/\/+/g, '/')
-    .replace(/^\/|\/$/g, '');
+    .replace(/[^\d\/]/g, '/').replace(/\/+/g, '/').replace(/^\/|\/$/g, '');
   const parts = s.split('/').filter(Boolean).map(Number);
   if(parts.length < 3) return '';
   let [y, m, d] = parts;
@@ -751,9 +798,8 @@ function diffDays(jA, jB){
   const pA = String(jA||'').split('/').map(Number);
   const pB = String(jB||'').split('/').map(Number);
   if(pA.length<3 || pB.length<3) return null;
-  try {
-    return jalaliToJDN(pB[0], pB[1], pB[2]) - jalaliToJDN(pA[0], pA[1], pA[2]);
-  } catch(e){ return null; }
+  try { return jalaliToJDN(pB[0], pB[1], pB[2]) - jalaliToJDN(pA[0], pA[1], pA[2]); }
+  catch(e){ return null; }
 }
 function addDaysJalali(jalali, n){
   const p = String(jalali||'').split('/').map(Number);
@@ -767,9 +813,8 @@ function addDaysJalali(jalali, n){
 function jalaliWeekday(jalali){
   const p = String(jalali||'').split('/').map(Number);
   if(p.length<3) return -1;
-  try {
-    return (jalaliToJDN(p[0], p[1], p[2]) + 2) % 7;
-  } catch(e){ return -1; }
+  try { return (jalaliToJDN(p[0], p[1], p[2]) + 2) % 7; }
+  catch(e){ return -1; }
 }
 function suggestVisitDate(hatch){
   if(!hatch) return '';
@@ -817,10 +862,6 @@ function excelSerialToJalali(serial){
   const j = gregorianToJalali(d.getUTCFullYear(), d.getUTCMonth()+1, d.getUTCDate());
   return `${j.jy}/${pad2(j.jm)}/${pad2(j.jd)}`;
 }
-
-/* =========================================================================
-   HELPER: روز مانده تا پیگیری (مثبت=آینده، 0=امروز، منفی=گذشته)
-   ========================================================================= */
 function followupDaysUntil(f){
   const due = getFollowupDue(f);
   if(!due) return null;
@@ -830,15 +871,15 @@ function followupDaysUntil(f){
 /* =========================================================================
    STORAGE
    ========================================================================= */
-const KEY = 'jooje_farms_v10';
-const KEY_SESSIONS = 'jooje_sessions_v5';
-const KEY_CURRENT_SESSION = 'jooje_current_session_v5';
+const KEY = 'jooje_farms_v11';
+const KEY_SESSIONS = 'jooje_sessions_v6';
+const KEY_CURRENT_SESSION = 'jooje_current_session_v6';
 
 let farms = JSON.parse(localStorage.getItem(KEY) || '[]');
 let sessions = JSON.parse(localStorage.getItem(KEY_SESSIONS) || '[]');
 let currentSession = JSON.parse(localStorage.getItem(KEY_CURRENT_SESSION) || 'null');
 let currentFilter = { search:'', region:'all', status:'all' };
-let editing = { visitId:null, followupId:null, regionId:null, moveId:null };
+let editing = { visitId:null, followupId:null, regionId:null, moveId:null, emailId:null };
 
 function save(){ localStorage.setItem(KEY, JSON.stringify(farms)); }
 function saveSessions(){ localStorage.setItem(KEY_SESSIONS, JSON.stringify(sessions)); }
@@ -862,10 +903,7 @@ function startNewSession(name){
     id: 'week_' + Date.now(),
     name: name || ('هفته ' + todayJalali()),
     startedAt: todayJalali(),
-    fileInfo: null,
-    farmsCount: 0,
-    logs: [],
-    active: true
+    fileInfo: null, farmsCount: 0, logs: [], active: true
   };
   saveCurrentSession();
   render();
@@ -883,19 +921,14 @@ function commitCurrentWeek(){
   if(!currentSession.fileInfo){ toast('❌ ابتدا فایل اکسل را آپلود کنید'); return; }
   if(!confirm('داده‌های این هفته در سابقه ثبت شود؟')) return;
   const snapshot = {
-    id: currentSession.id,
-    name: currentSession.name,
-    startedAt: currentSession.startedAt,
-    committedAt: todayJalali(),
-    fileInfo: currentSession.fileInfo,
-    farmsCount: farms.length,
-    farms: JSON.parse(JSON.stringify(farms)),
+    id: currentSession.id, name: currentSession.name, startedAt: currentSession.startedAt,
+    committedAt: todayJalali(), fileInfo: currentSession.fileInfo,
+    farmsCount: farms.length, farms: JSON.parse(JSON.stringify(farms)),
     logs: (currentSession.logs || []).slice()
   };
   sessions.unshift(snapshot);
   saveSessions();
-  currentSession = null;
-  saveCurrentSession();
+  currentSession = null; saveCurrentSession();
   toast('📚 هفته با موفقیت در سابقه ذخیره شد');
   render();
 }
@@ -912,8 +945,7 @@ function openCalendar(targetId){
   const currentVal = input.value ? fixJalali(input.value) : todayJalali();
   const parts = (currentVal || todayJalali()).split('/').map(Number);
   calState.target = targetId;
-  calState.year = parts[0];
-  calState.month = parts[1];
+  calState.year = parts[0]; calState.month = parts[1];
   calState.selected = input.value ? fixJalali(input.value) : '';
   renderCalendar();
   document.getElementById('calOverlay').classList.add('show');
@@ -952,13 +984,11 @@ function renderCalendar(){
   }
   container.innerHTML = html;
   document.getElementById('calPreview').innerHTML = selected
-    ? `تاریخ: <b>${selected}</b>`
-    : 'تاریخ را انتخاب کنید';
+    ? `تاریخ: <b>${selected}</b>` : 'تاریخ را انتخاب کنید';
 }
 function pickDate(y,m,d){
   const str = `${y}/${pad2(m)}/${pad2(d)}`;
-  calState.selected = str;
-  renderCalendar();
+  calState.selected = str; renderCalendar();
   const target = calState.target;
   document.getElementById(target).value = str;
   const disp = document.getElementById(target + 'Display');
@@ -982,17 +1012,13 @@ function render(){
         } else {
           f.suggested = fixJalali(f.suggested) || suggestVisitDate(f.hatch);
         }
-      } else {
-        f.suggested = '';
-      }
+      } else { f.suggested = ''; }
       if(!f.followup6) f.followup6 = { status:'pending' };
     }
   });
   save();
-  renderImportBanner();
-  renderSessionCard();
-  renderStats(); renderFarms(); renderAlerts();
-  renderHistory();
+  renderImportBanner(); renderSessionCard();
+  renderStats(); renderFarms(); renderAlerts(); renderHistory();
 }
 
 function renderImportBanner(){
@@ -1141,12 +1167,8 @@ function renderFarms(){
       return `<span class="chip done">✅ <span class="jdate">${doneDate}</span></span>`;
     }
     const d = followupDaysUntil(f);
-    if(d !== null && d <= 0){
-      return `<span class="chip followup"><span class="jdate">${due}</span></span>`;
-    }
-    if(d === 1){
-      return `<span class="chip due">🔔 <span class="jdate">${due}</span></span>`;
-    }
+    if(d !== null && d <= 0) return `<span class="chip followup"><span class="jdate">${due}</span></span>`;
+    if(d === 1) return `<span class="chip due">🔔 <span class="jdate">${due}</span></span>`;
     return `<span class="chip info"><span class="jdate">${due}</span></span>`;
   };
 
@@ -1158,8 +1180,7 @@ function renderFarms(){
     }
     if(fstat === 'done' && f.followup6.result === 'high')
       return '<span class="chip overdue">⚠️ تلفات بالای ۲٪</span>';
-    if(fstat === 'done')
-      return '<span class="chip done">✅ پیگیری انجام شد</span>';
+    if(fstat === 'done') return '<span class="chip done">✅ پیگیری انجام شد</span>';
     if(f.visit){
       if(f.visit.result==='ok') return '<span class="chip done">✅ تایید جوجه‌ریزی</span>';
       if(f.visit.result==='warn') return '<span class="chip due">🟡 هشدار</span>';
@@ -1174,6 +1195,8 @@ function renderFarms(){
     const d = followupDaysUntil(f);
     if(!f.visit && f.hatch)
       a += `<button class="btn btn-sm btn-acc" onclick="openVisit('${f.id}')">📝 بازدید</button>`;
+    if(f.visit)
+      a += `<button class="btn btn-sm btn-mail" onclick="openEmail('${f.id}')" title="ارسال گزارش با ایمیل">📧</button>`;
     if(fstat === 'pending' && d !== null && d <= 0)
       a += `<button class="btn btn-sm btn-warn" onclick="openFollowup('${f.id}')">📊 پیگیری</button>`;
     if(f.hatch)
@@ -1251,31 +1274,14 @@ function renderAlerts(){
   list.forEach(f=>{
     if(!f.hatch) return;
     if(!f.followup6 || f.followup6.status !== 'pending') return;
-    const due = getFollowupDue(f);
     const d = followupDaysUntil(f);
     if(d === null) return;
-
     if(d === 0){
-      alerts.push({
-        cls: 'followup',
-        farm: f,
-        msg: `📊 امروز روز ۶ از جوجه‌ریزی (<span class="jdate">${f.hatch}</span>) است — آمار تلفات را بگیرید`,
-        type: 'followup'
-      });
+      alerts.push({cls:'followup', farm:f, msg:`📊 امروز روز ۶ از جوجه‌ریزی (<span class="jdate">${f.hatch}</span>) است — آمار تلفات را بگیرید`, type:'followup'});
     } else if(d < 0){
-      alerts.push({
-        cls: 'followup',
-        farm: f,
-        msg: `⚠️ پیگیری روز ۶ جوجه‌ریزی <span class="jdate">${f.hatch}</span> ${-d} روز عقب افتاده — فوری`,
-        type: 'followup'
-      });
+      alerts.push({cls:'followup', farm:f, msg:`⚠️ پیگیری روز ۶ جوجه‌ریزی <span class="jdate">${f.hatch}</span> ${-d} روز عقب افتاده — فوری`, type:'followup'});
     } else if(d === 1){
-      alerts.push({
-        cls: 'soon',
-        farm: f,
-        msg: `⏰ فردا روز ۶ جوجه‌ریزی <span class="jdate">${f.hatch}</span> — آماده پیگیری`,
-        type: 'followup-soon'
-      });
+      alerts.push({cls:'soon', farm:f, msg:`⏰ فردا روز ۶ جوجه‌ریزی <span class="jdate">${f.hatch}</span> — آماده پیگیری`, type:'followup-soon'});
     }
   });
 
@@ -1363,6 +1369,247 @@ function renderLogs(logs){
 }
 
 /* =========================================================================
+   REPORT — پیش‌نمایش + PDF
+   ========================================================================= */
+function getReportFarms(){
+  const scope = document.getElementById('reportScope').value;
+  let list = filterByUser(farms);
+  if(scope === 'visited') list = list.filter(f=>f.visit);
+  else if(scope === 'notVisited') list = list.filter(f=>!f.visit);
+  else if(scope === 'followup') list = list.filter(f=>f.followup6 && f.followup6.status === 'pending');
+  else if(scope === 'problem') list = list.filter(f=>
+    (f.visit && (f.visit.result==='fail' || f.visit.result==='warn')) ||
+    (f.followup6 && f.followup6.status === 'done' && (f.followup6.result==='high' || f.followup6.result==='veryhigh'))
+  );
+  list.sort((a,b)=>{
+    const da = a.hatch ? jalaliToJDN(...a.hatch.split('/').map(Number)) : 0;
+    const db = b.hatch ? jalaliToJDN(...b.hatch.split('/').map(Number)) : 0;
+    return da - db;
+  });
+  return list;
+}
+
+function buildReportHTML(list){
+  const today = todayJalali();
+  const total = list.length;
+  const visited = list.filter(f=>f.visit).length;
+  const notVisited = total - visited;
+  const approved = list.filter(f=>f.visit && f.visit.result==='ok').length;
+  const warned = list.filter(f=>f.visit && f.visit.result==='warn').length;
+  const rejected = list.filter(f=>f.visit && f.visit.result==='fail').length;
+  const followupPending = list.filter(f=>f.followup6 && f.followup6.status==='pending').length;
+  const followupDone = list.filter(f=>f.followup6 && f.followup6.status==='done').length;
+
+  const rows = list.map((f, i)=>{
+    const visit = f.visit
+      ? `<span class="${f.visit.result==='ok'?'ok-tag':(f.visit.result==='fail'?'no-tag':'')}">${f.visit.date}</span>`
+      : '<span style="color:#999">—</span>';
+    const result = f.visit
+      ? (f.visit.result==='ok'?'<span class="ok-tag">تایید</span>'
+        : f.visit.result==='warn'?'<span style="color:#f59e0b">هشدار</span>'
+        : '<span class="no-tag">رد شد</span>')
+      : '<span style="color:#999">بازدید نشده</span>';
+    const region = f.region==='west'?'غرب':(f.region==='east'?'شرق':'—');
+    const followup = f.followup6 && f.followup6.status==='done'
+      ? (f.followup6.result==='ok'?'<span class="ok-tag">✅ نرمال</span>'
+        : f.followup6.result==='high'?'<span class="no-tag">⚠️ بالای ۲٪</span>'
+        : '<span class="no-tag">🚨 بحرانی</span>')
+      : (f.followup6 && f.followup6.status==='pending' ? '<span style="color:#f59e0b">در انتظار</span>' : '—');
+
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${f.code||'—'}</td>
+      <td style="text-align:right;font-size:10px">${(f.name||'—').substring(0,40)}</td>
+      <td>${f.hatch||'—'}</td>
+      <td>${(f.qty||0).toLocaleString('fa-IR')}</td>
+      <td>${region}</td>
+      <td>${visit}</td>
+      <td>${result}</td>
+      <td>${followup}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div class="rp-header">
+      <div class="rp-title">🐣 سامانه مدیریت جوجه‌ریزی</div>
+      <div class="rp-sub">گزارش وضعیت بازدید و پیگیری فارم‌ها</div>
+      <div class="rp-sub">تاریخ گزارش: ${today}</div>
+    </div>
+
+    <div class="rp-meta">
+      <div>📊 <b>کل فارم‌ها:</b> ${total}</div>
+      <div>✅ <b>بازدید شده:</b> ${visited}</div>
+      <div>⏳ <b>بازدید نشده:</b> ${notVisited}</div>
+      <div>👍 <b>تایید شده:</b> ${approved}</div>
+      <div>⚠️ <b>هشدار:</b> ${warned}</div>
+      <div>❌ <b>رد شده:</b> ${rejected}</div>
+      <div>📊 <b>پیگیری در انتظار:</b> ${followupPending}</div>
+      <div>✅ <b>پیگیری انجام شده:</b> ${followupDone}</div>
+    </div>
+
+    <div class="rp-section">
+      <h4>📋 جدول تفصیلی فارم‌ها</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>کد فارم</th>
+            <th>نام فارم</th>
+            <th>تاریخ هچ</th>
+            <th>تخصیص</th>
+            <th>منطقه</th>
+            <th>تاریخ بازدید</th>
+            <th>نتیجه</th>
+            <th>پیگیری روز ۶</th>
+          </tr>
+        </thead>
+        <tbody>${rows || '<tr><td colspan="9" style="text-align:center;color:#999">داده‌ای برای نمایش نیست</td></tr>'}</tbody>
+      </table>
+    </div>
+
+    <div class="rp-footer">
+      گزارش خودکار — سامانه مدیریت جوجه‌ریزی — توسعه‌دهنده: میلاد طیبی<br>
+      تاریخ تولید گزارش: ${today} — ساعت: ${new Date().toLocaleTimeString('fa-IR')}
+    </div>
+  `;
+}
+
+function openReportPreview(){
+  const list = getReportFarms();
+  if(list.length === 0){
+    toast('❌ داده‌ای برای این گزارش وجود ندارد');
+    return;
+  }
+  document.getElementById('reportPreviewArea').innerHTML = buildReportHTML(list);
+  document.getElementById('reportModal').classList.add('show');
+}
+
+function downloadReportPDF(){
+  const el = document.getElementById('reportPreviewArea');
+  if(!el) return;
+  toast('⏳ در حال ساخت PDF...');
+  const opt = {
+    margin: 10,
+    filename: `report_jooje_${todayJalali().replace(/\//g,'-')}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(el).save().then(()=>{
+    toast('✅ PDF دانلود شد');
+  }).catch(()=>{
+    toast('❌ خطا در ساخت PDF');
+  });
+}
+
+function printReport(){
+  const el = document.getElementById('reportPreviewArea');
+  if(!el) return;
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html dir="rtl"><head>
+    <meta charset="UTF-8">
+    <title>گزارش جوجه‌ریزی</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+    <style>
+      body{font-family:'Vazirmatn',sans-serif;padding:20px;background:#fff;color:#000}
+      .rp-header{text-align:center;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #00a882}
+      .rp-header .rp-title{font-size:18px;font-weight:800;color:#006a52}
+      .rp-header .rp-sub{font-size:12px;color:#555;margin-top:4px}
+      .rp-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;background:#f5f9fc;padding:12px;border-radius:8px;margin-bottom:16px;font-size:12px}
+      .rp-meta b{color:#006a52}
+      .rp-section h4{font-size:14px;color:#006a52;font-weight:800;margin-bottom:8px;border-right:3px solid #00a882;padding-right:8px}
+      table{width:100%;border-collapse:collapse;font-size:11px}
+      th{background:#00a882;color:#fff;padding:7px;text-align:right;border:1px solid #00a882}
+      td{padding:6px 7px;border:1px solid #d8e2ea;text-align:right;color:#222}
+      tr:nth-child(even) td{background:#f5f9fc}
+      .rp-footer{margin-top:20px;padding-top:12px;border-top:1px solid #ccc;font-size:11px;color:#555;text-align:center}
+      .ok-tag{color:#16a34a;font-weight:700}
+      .no-tag{color:#dc2626;font-weight:700}
+    </style>
+    </head><body>${el.innerHTML}</body></html>
+  `);
+  win.document.close();
+  setTimeout(()=>{ win.print(); }, 500);
+}
+
+/* =========================================================================
+   EMAIL — نامه رسمی گزارش بازدید
+   ========================================================================= */
+function openEmail(id){
+  const f = farms.find(x=>x.id===id);
+  if(!f || !f.visit){ toast('❌ ابتدا بازدید را ثبت کنید'); return; }
+  editing.emailId = id;
+
+  const visitResult = f.visit.result === 'ok' ? 'مورد تأیید می‌باشد'
+    : f.visit.result === 'warn' ? 'با هشدار همراه بوده و نیاز به پیگیری دارد'
+    : 'مورد تأیید نمی‌باشد و جهت جوجه‌ریزی مجاز نیست';
+
+  const breed = f.breed || '—';
+  const age = f.age || '—';
+  const qty = (f.qty||0).toLocaleString('fa-IR');
+  const house = f.house || '—';
+  const region = f.region === 'west' ? 'غرب' : (f.region === 'east' ? 'شرق' : '—');
+
+  const bodyText = `جناب مهندس حبیبی
+مدیریت محترم واحد کنترل کیفیت
+
+با سلام و احترام،
+
+به استحضار می‌رساند فارم «${f.name||f.code}» به کد ${f.code||'—'} واقع در استان ${f.province||'گلستان'}، با برنامه جوجه‌ریزی ${qty} قطعه جوجه نژاد ${breed} از گله مادر (سن ${age} هفته) در تاریخ ${f.hatch}، در تاریخ ${f.visit.date} توسط کارشناس واحد کنترل کیفیت مورد بازدید و ارزیابی قرار گرفت.
+
+در این بازدید، شرایط فارم از نظر پاکسازی، شست‌وشو، ضدعفونی و رعایت الزامات مندرج در دستورالعمل‌های شرکت دام و طیور کوروش مورد بررسی قرار گرفت.
+
+با توجه به نتایج بررسی انجام‌شده، فارم مذکور از نظر واحد کنترل کیفیت شرایط لازم جهت انجام جوجه‌ریزی برنامه‌ریزی‌شده را داشته و ${visitResult}.
+
+${f.visit.note ? 'یادداشت کارشناس: ' + f.visit.note + '\n\n' : ''}مراتب جهت استحضار و اقدامات لازم ایفاد می‌گردد.
+
+با احترام
+واحد کنترل کیفیت استان ${f.province||'گلستان'}
+کارشناس بازدید: ${document.getElementById('currentUser').value}`;
+
+  document.getElementById('emailFarmInfo').innerHTML =
+    `<b>${f.name||''}</b><br><code style="font-size:11px;color:var(--muted)">${f.code}</code>
+     — تاریخ بازدید: <b class="jdate">${f.visit.date}</b>`;
+  document.getElementById('emailTo').value = '';
+  document.getElementById('emailSubject').value = `گزارش بازدید فارم ${f.code} — ${f.name||''}`;
+  document.getElementById('emailBody').value = bodyText;
+  document.getElementById('emailModal').classList.add('show');
+}
+
+function sendEmail(){
+  const to = document.getElementById('emailTo').value.trim();
+  const subject = document.getElementById('emailSubject').value;
+  const body = document.getElementById('emailBody').value;
+  if(!to){ toast('❌ ایمیل گیرنده را وارد کنید'); return; }
+  const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = url;
+  const f = farms.find(x=>x.id===editing.emailId);
+  if(f) addLog('ارسال ایمیل', `گزارش بازدید «${f.name}» به ${to} ارسال شد`);
+  closeModal('emailModal');
+  toast('📧 ایمیل باز شد — در اپ ایمیل ارسال کنید');
+}
+
+function copyEmailText(){
+  const body = document.getElementById('emailBody').value;
+  const subject = document.getElementById('emailSubject').value;
+  const full = `موضوع: ${subject}\n\n${body}`;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(full).then(()=>toast('📋 متن کپی شد')).catch(()=>fallbackCopy(full));
+  } else {
+    fallbackCopy(full);
+  }
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); toast('📋 متن کپی شد'); }
+  catch(e){ toast('❌ کپی نشد'); }
+  document.body.removeChild(ta);
+}
+
+/* =========================================================================
    MODAL ACTIONS
    ========================================================================= */
 function setDateDisplay(inputId, value){
@@ -1381,7 +1628,7 @@ function openVisit(id){
   editing.visitId = id;
   document.getElementById('visitFarmName').innerHTML =
     `<b>${f.name||''}</b><br><code style="font-size:11px;color:var(--muted)">${f.code}</code><br>
-     تاریخ هچ: <b class="jdate">${f.hatch}</b> — بازدید پیشنهادی (۳ روز قبل): <b class="jdate">${f.suggested}</b>`;
+     تاریخ هچ: <b class="jdate">${f.hatch}</b> — بازدید پیشنهادی: <b class="jdate">${f.suggested}</b>`;
   setDateDisplay('visitDate', getToday());
   document.getElementById('visitResult').value = 'ok';
   document.getElementById('visitNote').value = '';
@@ -1560,8 +1807,7 @@ function parseRows(rows, fileName){
   if(nameIdx < 0){ toast('❌ ستون «نام فارم» پیدا نشد'); return; }
 
   const idx = {
-    code: codeIdx,
-    name: nameIdx,
+    code: codeIdx, name: nameIdx,
     province: findIdxByNames(header, ['استان']),
     hatch: findIdxByNames(header, ['تاریخ هچ']),
     qty: findIdxByNames(header, ['تخصیص به فارم','تخصیص']),
@@ -1581,18 +1827,13 @@ function parseRows(rows, fileName){
     const nameVal = String(r[idx.name]||'').trim();
     if(!codeVal && !nameVal) continue;
     const hatch = excelDateToJalali(r[idx.hatch]);
-    if(!hatch){
-      console.warn('⚠️ تاریخ نامعتبر در ردیف ' + i + ':', r[idx.hatch]);
-      failedDates++;
-      continue;
-    }
+    if(!hatch){ console.warn('⚠️ تاریخ نامعتبر ردیف ' + i + ':', r[idx.hatch]); failedDates++; continue; }
     const fullName = nameVal || codeVal;
     const { base, part } = extractPartNumber(fullName);
 
     raw.push({
       code: codeVal || fullName.split(' ')[0] || '—',
-      name: fullName,
-      base, part,
+      name: fullName, base, part,
       province: idx.province>=0 ? String(r[idx.province]||'').trim() : '',
       hatch,
       qty: idx.qty>=0 ? (Number(String(r[idx.qty]||'0').replace(/[,\s]/g,'')) || 0) : 0,
@@ -1619,21 +1860,13 @@ function parseRows(rows, fileName){
 
     const rec = {
       id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-      code: main.code,
-      name: main.name,
-      baseName: main.base || main.name,
-      partsCount,
-      province: main.province,
-      hatch: main.hatch,
-      qty: totalQty,
-      house: main.house,
-      houseProvince: main.houseProvince,
-      breed: main.breed,
-      age: main.age,
-      region: null,
-      suggested: suggestVisitDate(main.hatch),
-      visit: null,
-      followup6: { status:'pending' },
+      code: main.code, name: main.name,
+      baseName: main.base || main.name, partsCount,
+      province: main.province, hatch: main.hatch, qty: totalQty,
+      house: main.house, houseProvince: main.houseProvince,
+      breed: main.breed, age: main.age,
+      region: null, suggested: suggestVisitDate(main.hatch),
+      visit: null, followup6: { status:'pending' },
       parts: group.map(p=>({name:p.name, qty:p.qty, hatch:p.hatch})),
     };
 
@@ -1647,20 +1880,18 @@ function parseRows(rows, fileName){
       });
       updated++;
     } else {
-      farms.push(rec);
-      added++;
+      farms.push(rec); added++;
     }
     if(partsCount > 1) merged++;
   });
 
   save();
-
   if(!currentSession) startNewSession('هفته ' + todayJalali());
   registerFileUpload(fileName || 'فایل اکسل', farms.length);
 
   document.getElementById('importStatus').innerHTML =
     `✅ ${added} فارم جدید &nbsp;|&nbsp; 🔄 ${updated} به‌روزرسانی &nbsp;|&nbsp; 🔗 ${merged} گروه ادغام‌شده
-     ${failedDates > 0 ? `<br><span style="color:var(--danger)">⚠️ ${failedDates} ردیف با تاریخ نامعتبر رد شد (Console را چک کنید)</span>` : ''}<br>
+     ${failedDates > 0 ? `<br><span style="color:var(--danger)">⚠️ ${failedDates} ردیف با تاریخ نامعتبر</span>` : ''}<br>
      <span style="color:var(--acc)">📚 حالا در داشبورد دکمه «ثبت هفته در سابقه» را بزن</span>`;
   toast(`📥 ${added} فارم ثبت شد`);
   render();
