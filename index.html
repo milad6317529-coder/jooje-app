@@ -496,6 +496,11 @@ footer b{ color:var(--acc); font-weight:700; }
       </span>
     </div>
     <div id="historyList" class="session-list"></div>
+    <div class="toolbar" style="margin-top:18px">
+      <strong style="font-size:14px">📝 سابقه همه بازدیدها</strong>
+      <button class="btn btn-blue" onclick="exportVisits()">📤 خروجی Excel</button>
+    </div>
+    <div id="visitHistoryList"></div>
   </div>
 
   <div id="tab-import" style="display:none">
@@ -532,9 +537,17 @@ footer b{ color:var(--acc); font-weight:700; }
     <div class="field"><label>نتیجه بازدید</label>
       <select id="visitResult">
         <option value="ok">✅ سالم و مورد تایید برای جوجه‌ریزی</option>
-        <option value="warn">🟡 هشدار جزئی</option>
+        <option value="revisit">🔁 بازدید مجدد</option>
         <option value="fail">❌ رد شد / کنسلی</option>
       </select>
+    </div>
+    <div class="field" id="revisitDateField" style="display:none">
+      <label>تاریخ بازدید مجدد</label>
+      <div class="date-field" onclick="openCalendar('revisitDate')">
+        <span class="ico">📅</span>
+        <span class="val empty" id="revisitDateDisplay">انتخاب تاریخ</span>
+      </div>
+      <input type="hidden" id="revisitDate">
     </div>
     <div class="field"><label>یادداشت</label><textarea id="visitNote" rows="2"></textarea></div>
     <div class="modal-actions">
@@ -874,16 +887,65 @@ function followupDaysUntil(f){
 const KEY = 'jooje_farms_v11';
 const KEY_SESSIONS = 'jooje_sessions_v6';
 const KEY_CURRENT_SESSION = 'jooje_current_session_v6';
+const KEY_VISITS = 'jooje_visit_history_v1';
+const KEY_VISITS_MIGRATED = 'jooje_visit_history_migrated_v1';
 
 let farms = JSON.parse(localStorage.getItem(KEY) || '[]');
 let sessions = JSON.parse(localStorage.getItem(KEY_SESSIONS) || '[]');
 let currentSession = JSON.parse(localStorage.getItem(KEY_CURRENT_SESSION) || 'null');
+let visits = JSON.parse(localStorage.getItem(KEY_VISITS) || '[]');
 let currentFilter = { search:'', region:'all', status:'all' };
-let editing = { visitId:null, followupId:null, regionId:null, moveId:null, emailId:null };
+let editing = { visitId:null, visitRecordId:null, followupId:null, regionId:null, moveId:null };
 
 function save(){ localStorage.setItem(KEY, JSON.stringify(farms)); }
 function saveSessions(){ localStorage.setItem(KEY_SESSIONS, JSON.stringify(sessions)); }
 function saveCurrentSession(){ localStorage.setItem(KEY_CURRENT_SESSION, JSON.stringify(currentSession)); }
+function saveVisits(){ localStorage.setItem(KEY_VISITS, JSON.stringify(visits)); }
+
+function migrateLegacyVisits(){
+  farms.forEach(f=>{
+    if(!f.visit) return;
+    let entry = f.visit.recordId ? visits.find(v=>v.id===f.visit.recordId) : null;
+    if(!entry){
+      entry = {
+        id: 'v_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+        farmId: f.id, farmCode: f.code||'', farmName: f.name||'', hatch: f.hatch||'',
+        date: fixJalali(f.visit.date) || todayJalali(),
+        result: f.visit.result==='warn' ? 'revisit' : (f.visit.result||'ok'),
+        revisitDate: fixJalali(f.visit.revisitDate)||'', note: f.visit.note||'',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+      };
+      visits.push(entry);
+    }
+    f.visit.recordId = entry.id;
+  });
+  if(localStorage.getItem(KEY_VISITS_MIGRATED)!=='1'){
+    const legacyLogs = sessions.flatMap(s=>s.logs||[]).concat(currentSession?.logs||[]);
+    legacyLogs.filter(l=>l.action==='بازدید').forEach(l=>{
+    const details = String(l.details||'');
+    const nameMatch = details.match(/^«([^»]+)»/);
+    const farmName = nameMatch ? nameMatch[1] : '';
+    const f = farms.find(x=>x.name===farmName || x.baseName===farmName);
+    const dateMatch = details.match(/تاریخ:\s*([0-9۰-۹٠-٩/.-]+)/);
+    const date = dateMatch ? fixJalali(dateMatch[1]) : '';
+    if(!date) return;
+    const result = details.includes('تایید') ? 'ok' : details.includes('هشدار') ? 'revisit' : details.includes('رد') ? 'fail' : '';
+    if(!result) return;
+    const duplicate = visits.some(v=>v.date===date && v.result===result &&
+      (f ? v.farmId===f.id : v.farmName===farmName));
+    if(duplicate) return;
+    visits.push({
+      id:'v_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      farmId:f?.id||null, farmCode:f?.code||'', farmName:farmName,
+      hatch:f?.hatch||'', date, result, revisitDate:'', note:'',
+      createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+    });
+    });
+    localStorage.setItem(KEY_VISITS_MIGRATED,'1');
+  }
+  saveVisits();
+  save();
+}
 
 /* =========================================================================
    LOG/SESSION
@@ -1018,7 +1080,7 @@ function render(){
   });
   save();
   renderImportBanner(); renderSessionCard();
-  renderStats(); renderFarms(); renderAlerts(); renderHistory();
+  renderStats(); renderFarms(); renderAlerts(); renderHistory(); renderVisitHistory();
 }
 
 function renderImportBanner(){
@@ -1076,11 +1138,12 @@ function renderStats(){
   const west = list.filter(f=>f.region==='west').length;
   const east = list.filter(f=>f.region==='east').length;
   const unassigned = list.filter(f=>!f.region).length;
-  const todayVisits = list.filter(f=>f.suggested === today).length;
+  const todayVisits = list.filter(f=>f.suggested === today || (f.visit?.result==='revisit' && f.visit.revisitDate===today)).length;
   const overdue = list.filter(f=>{
-    if(f.visit) return false;
-    const d = diffDays(today, f.suggested);
-    return d!==null && d<-1;
+    if(f.visit && f.visit.result!=='revisit') return false;
+    const due = f.visit?.result==='revisit' ? f.visit.revisitDate : f.suggested;
+    const d = diffDays(today, due);
+    return d!==null && d<0;
   }).length;
   const followupDue = list.filter(f=>{
     if(!f.followup6 || f.followup6.status !== 'pending') return false;
@@ -1111,8 +1174,8 @@ function getFilteredFarms(){
       (f.breed||'').toLowerCase().includes(q)
     );
   }
-  if(currentFilter.status === 'pending') list = list.filter(f=>!f.visit);
-  if(currentFilter.status === 'visited') list = list.filter(f=>f.visit);
+  if(currentFilter.status === 'pending') list = list.filter(f=>!f.visit || f.visit.result==='revisit');
+  if(currentFilter.status === 'visited') list = list.filter(f=>f.visit && f.visit.result!=='revisit');
   if(currentFilter.status === 'followup6') list = list.filter(f=>{
     if(!f.followup6 || f.followup6.status !== 'pending') return false;
     const d = followupDaysUntil(f);
@@ -1150,6 +1213,13 @@ function renderFarms(){
 
   const visitChip = f => {
     const sug = f.suggested;
+    if(f.visit && f.visit.result==='revisit' && f.visit.revisitDate){
+      const d = diffDays(today, f.visit.revisitDate);
+      const cls = d < 0 ? 'overdue' : (d <= 1 ? 'due' : 'info');
+      return `<span class="chip ${cls}">🔁 <span class="jdate">${f.visit.revisitDate}</span></span>`;
+    }
+    if(f.visit && f.visit.result==='fail')
+      return `<span class="chip overdue">❌ رد / کنسل — <span class="jdate">${f.visit.date}</span></span>`;
     if(!sug) return '<span class="chip">—</span>';
     if(f.visit) return `<span class="chip done">✅ <span class="jdate">${f.visit.date}</span></span>`;
     const d = diffDays(today, sug);
@@ -1180,10 +1250,11 @@ function renderFarms(){
     }
     if(fstat === 'done' && f.followup6.result === 'high')
       return '<span class="chip overdue">⚠️ تلفات بالای ۲٪</span>';
-    if(fstat === 'done') return '<span class="chip done">✅ پیگیری انجام شد</span>';
+    if(fstat === 'done')
+      return '<span class="chip done">✅ پیگیری انجام شد</span>';
     if(f.visit){
       if(f.visit.result==='ok') return '<span class="chip done">✅ تایید جوجه‌ریزی</span>';
-      if(f.visit.result==='warn') return '<span class="chip due">🟡 هشدار</span>';
+      if(f.visit.result==='revisit' || f.visit.result==='warn') return '<span class="chip due">🔁 بازدید مجدد</span>';
       if(f.visit.result==='fail') return '<span class="chip overdue">❌ رد شد</span>';
     }
     return '<span class="chip">در انتظار بازدید</span>';
@@ -1193,10 +1264,12 @@ function renderFarms(){
     let a = '';
     const fstat = f.followup6 && f.followup6.status;
     const d = followupDaysUntil(f);
-    if(!f.visit && f.hatch)
-      a += `<button class="btn btn-sm btn-acc" onclick="openVisit('${f.id}')">📝 بازدید</button>`;
-    if(f.visit)
+    if(f.hatch)
+      a += `<button class="btn btn-sm btn-acc" onclick="openVisit('${f.id}')">📝 ${f.visit ? 'بازدید جدید' : 'بازدید'}</button>`;
+    if(f.visit){
+      a += `<button class="btn btn-sm btn-ghost" onclick="openVisit('${f.id}','${f.visit.recordId||''}')">✏️ ویرایش</button>`;
       a += `<button class="btn btn-sm btn-mail" onclick="openEmail('${f.id}')" title="ارسال گزارش با ایمیل">📧</button>`;
+    }
     if(fstat === 'pending' && d !== null && d <= 0)
       a += `<button class="btn btn-sm btn-warn" onclick="openFollowup('${f.id}')">📊 پیگیری</button>`;
     if(f.hatch)
@@ -1253,14 +1326,30 @@ function renderAlerts(){
 
   list.forEach(f=>{
     if(!f.hatch) return;
+    if(f.visit && f.visit.result==='revisit' && f.visit.revisitDate){
+      const d = diffDays(today, f.visit.revisitDate);
+      if(d !== null && d <= 7){
+        alerts.push({
+          cls: d < 0 ? 'urgent' : (d === 0 ? 'followup' : 'soon'),
+          farm: f,
+          msg: d < 0 ? `🚨 بازدید مجدد ${-d} روز عقب افتاده` : (d === 0 ? '🔁 امروز زمان بازدید مجدد است' : `📅 ${d} روز تا بازدید مجدد`),
+          type: 'revisit'
+        });
+      }
+      return;
+    }
     if(f.visit) return;
     const diff = diffDays(today, f.hatch);
     if(diff === null) return;
     if(diff >= -5 && diff <= 7){
+      const visitDiff = f.suggested ? diffDays(today, f.suggested) : null;
       let cls = 'soon', msg = '';
-      if(diff <= 4 && diff >= -1){
+      if(visitDiff !== null && visitDiff < 0){
         cls = 'urgent';
-        msg = diff<0 ? '🚨 بازدید عقب افتاده' : `⏰ ${diff} روز تا جوجه‌ریزی — بازدید کنید`;
+        msg = '🚨 بازدید عقب افتاده';
+      } else if(visitDiff !== null && visitDiff <= 1){
+        cls = 'urgent';
+        msg = `⏰ ${diff} روز تا جوجه‌ریزی — بازدید کنید`;
       } else if(diff > 4){
         msg = `📅 ${diff} روز تا جوجه‌ریزی`;
       } else {
@@ -1274,14 +1363,31 @@ function renderAlerts(){
   list.forEach(f=>{
     if(!f.hatch) return;
     if(!f.followup6 || f.followup6.status !== 'pending') return;
+    const due = getFollowupDue(f);
     const d = followupDaysUntil(f);
     if(d === null) return;
+
     if(d === 0){
-      alerts.push({cls:'followup', farm:f, msg:`📊 امروز روز ۶ از جوجه‌ریزی (<span class="jdate">${f.hatch}</span>) است — آمار تلفات را بگیرید`, type:'followup'});
+      alerts.push({
+        cls: 'followup',
+        farm: f,
+        msg: `📊 امروز روز ۶ از جوجه‌ریزی (<span class="jdate">${f.hatch}</span>) است — آمار تلفات را بگیرید`,
+        type: 'followup'
+      });
     } else if(d < 0){
-      alerts.push({cls:'followup', farm:f, msg:`⚠️ پیگیری روز ۶ جوجه‌ریزی <span class="jdate">${f.hatch}</span> ${-d} روز عقب افتاده — فوری`, type:'followup'});
+      alerts.push({
+        cls: 'followup',
+        farm: f,
+        msg: `⚠️ پیگیری روز ۶ جوجه‌ریزی <span class="jdate">${f.hatch}</span> ${-d} روز عقب افتاده — فوری`,
+        type: 'followup'
+      });
     } else if(d === 1){
-      alerts.push({cls:'soon', farm:f, msg:`⏰ فردا روز ۶ جوجه‌ریزی <span class="jdate">${f.hatch}</span> — آماده پیگیری`, type:'followup-soon'});
+      alerts.push({
+        cls: 'soon',
+        farm: f,
+        msg: `⏰ فردا روز ۶ جوجه‌ریزی <span class="jdate">${f.hatch}</span> — آماده پیگیری`,
+        type: 'followup-soon'
+      });
     }
   });
 
@@ -1298,7 +1404,7 @@ function renderAlerts(){
         <span>${a.msg} — منطقه: ${a.farm.region==='west'?'غرب':a.farm.region==='east'?'شرق':'نامشخص'}</span>
       </div>
       <div style="display:flex;gap:6px">
-        ${a.type==='visit' ? `<button class="btn btn-sm btn-acc" onclick="openVisit('${a.farm.id}')">📝 بازدید</button>` : ''}
+        ${a.type==='visit' || a.type==='revisit' ? `<button class="btn btn-sm btn-acc" onclick="openVisit('${a.farm.id}')">📝 ثبت بازدید</button>` : ''}
         ${(a.type==='followup'||a.type==='followup-soon') ? `<button class="btn btn-sm btn-warn" onclick="openFollowup('${a.farm.id}')">📊 پیگیری</button>` : ''}
         <button class="btn btn-sm btn-ghost" onclick="openMove('${a.farm.id}')">📅</button>
       </div>
@@ -1395,7 +1501,7 @@ function buildReportHTML(list){
   const visited = list.filter(f=>f.visit).length;
   const notVisited = total - visited;
   const approved = list.filter(f=>f.visit && f.visit.result==='ok').length;
-  const warned = list.filter(f=>f.visit && f.visit.result==='warn').length;
+  const warned = list.filter(f=>f.visit && (f.visit.result==='warn' || f.visit.result==='revisit')).length;
   const rejected = list.filter(f=>f.visit && f.visit.result==='fail').length;
   const followupPending = list.filter(f=>f.followup6 && f.followup6.status==='pending').length;
   const followupDone = list.filter(f=>f.followup6 && f.followup6.status==='done').length;
@@ -1406,7 +1512,7 @@ function buildReportHTML(list){
       : '<span style="color:#999">—</span>';
     const result = f.visit
       ? (f.visit.result==='ok'?'<span class="ok-tag">تایید</span>'
-        : f.visit.result==='warn'?'<span style="color:#f59e0b">هشدار</span>'
+        : (f.visit.result==='warn' || f.visit.result==='revisit')?'<span style="color:#f59e0b">بازدید مجدد</span>'
         : '<span class="no-tag">رد شد</span>')
       : '<span style="color:#999">بازدید نشده</span>';
     const region = f.region==='west'?'غرب':(f.region==='east'?'شرق':'—');
@@ -1542,7 +1648,7 @@ function openEmail(id){
   editing.emailId = id;
 
   const visitResult = f.visit.result === 'ok' ? 'مورد تأیید می‌باشد'
-    : f.visit.result === 'warn' ? 'با هشدار همراه بوده و نیاز به پیگیری دارد'
+    : f.visit.result === 'revisit' ? ('نیازمند بازدید مجدد در تاریخ ' + (f.visit.revisitDate||'ثبت‌نشده')) : f.visit.result === 'warn' ? 'با هشدار همراه بوده و نیاز به پیگیری دارد'
     : 'مورد تأیید نمی‌باشد و جهت جوجه‌ریزی مجاز نیست';
 
   const breed = f.breed || '—';
@@ -1609,6 +1715,57 @@ function fallbackCopy(text){
   document.body.removeChild(ta);
 }
 
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function visitResultLabel(result){
+  return result==='ok' ? 'تایید' : result==='revisit' || result==='warn' ? 'بازدید مجدد' : 'رد / کنسل';
+}
+function renderVisitHistory(){
+  const c = document.getElementById('visitHistoryList');
+  if(!visits.length){
+    c.innerHTML = '<div class="empty"><div class="icon">📝</div>هنوز بازدیدی ثبت نشده است</div>';
+    return;
+  }
+  const rows = visits.slice().sort((a,b)=>{
+    const da = a.date ? jalaliToJDN(...a.date.split('/').map(Number)) : 0;
+    const db = b.date ? jalaliToJDN(...b.date.split('/').map(Number)) : 0;
+    return db-da || String(b.updatedAt||'').localeCompare(String(a.updatedAt||''));
+  });
+  c.innerHTML = `<div class="tablebox"><div class="table-scroll" style="display:block"><table style="min-width:1050px">
+    <thead><tr><th>تاریخ بازدید</th><th>فارم / کد</th><th>تاریخ هچ</th><th>نتیجه</th><th>تاریخ بازدید مجدد</th><th>یادداشت</th><th>ویرایش</th></tr></thead>
+    <tbody>${rows.map(v=>{
+      const f = farms.find(x=>x.id===v.farmId);
+      const farmName = v.farmName || f?.name || '—';
+      const farmCode = v.farmCode || f?.code || '';
+      return `<tr><td><span class="jdate">${escapeHtml(v.date)}</span></td>
+        <td><b>${escapeHtml(farmName)}</b><span class="fcode">${escapeHtml(farmCode)}</span></td>
+        <td><span class="jdate">${escapeHtml(v.hatch||f?.hatch||'—')}</span></td>
+        <td>${escapeHtml(visitResultLabel(v.result))}</td>
+        <td>${v.revisitDate ? `<span class="jdate">${escapeHtml(v.revisitDate)}</span>` : '—'}</td>
+        <td>${escapeHtml(v.note||'—')}</td>
+        <td>${f ? `<button class="btn btn-sm btn-ghost" onclick="openVisit('${f.id}','${v.id}')">✏️ ویرایش</button>` : '—'}</td></tr>`;
+    }).join('')}</tbody></table></div></div>`;
+}
+function exportVisits(){
+  if(!visits.length){ toast('❌ سابقه‌ای برای خروجی وجود ندارد'); return; }
+  if(typeof XLSX==='undefined'){ toast('❌ کتابخانه Excel در دسترس نیست'); return; }
+  const rows = visits.map(v=>{
+    const f = farms.find(x=>x.id===v.farmId);
+    return [v.date||'', v.farmName||f?.name||'', v.farmCode||f?.code||'', v.hatch||f?.hatch||'',
+      visitResultLabel(v.result), v.revisitDate||'', v.note||'', v.updatedAt||v.createdAt||''];
+  });
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['تاریخ بازدید','نام فارم','کد فارم','تاریخ هچ','نتیجه','تاریخ بازدید مجدد','یادداشت','آخرین ویرایش'],
+    ...rows
+  ]);
+  ws['!cols'] = [{wch:16},{wch:32},{wch:16},{wch:16},{wch:18},{wch:18},{wch:42},{wch:24}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'سابقه بازدیدها');
+  XLSX.writeFile(wb, `visit-history-${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('📤 خروجی Excel آماده شد');
+}
+
 /* =========================================================================
    MODAL ACTIONS
    ========================================================================= */
@@ -1622,28 +1779,60 @@ function setDateDisplay(inputId, value){
   }
 }
 
-function openVisit(id){
+function toggleRevisitDateField(){
+  const visible = document.getElementById('visitResult').value === 'revisit';
+  document.getElementById('revisitDateField').style.display = visible ? 'block' : 'none';
+}
+function openVisit(id, recordId=null){
   const f = farms.find(x=>x.id===id);
   if(!f) return;
+  const record = recordId ? visits.find(v=>v.id===recordId) : null;
   editing.visitId = id;
+  editing.visitRecordId = record ? record.id : null;
+  document.querySelector('#visitModal h2').textContent = record ? '✏️ ویرایش بازدید' : '📝 ثبت بازدید';
   document.getElementById('visitFarmName').innerHTML =
     `<b>${f.name||''}</b><br><code style="font-size:11px;color:var(--muted)">${f.code}</code><br>
-     تاریخ هچ: <b class="jdate">${f.hatch}</b> — بازدید پیشنهادی: <b class="jdate">${f.suggested}</b>`;
-  setDateDisplay('visitDate', getToday());
-  document.getElementById('visitResult').value = 'ok';
-  document.getElementById('visitNote').value = '';
+     تاریخ هچ: <b class="jdate">${f.hatch}</b> — بازدید پیشنهادی (۳ روز قبل): <b class="jdate">${f.suggested}</b>`;
+  setDateDisplay('visitDate', record?.date || getToday());
+  setDateDisplay('revisitDate', record?.revisitDate || '');
+  document.getElementById('visitResult').value = record?.result || 'ok';
+  document.getElementById('visitNote').value = record?.note || '';
+  toggleRevisitDateField();
   document.getElementById('visitModal').classList.add('show');
 }
 function saveVisit(){
   const f = farms.find(x=>x.id===editing.visitId);
   if(!f) return;
   const dateVal = fixJalali(document.getElementById('visitDate').value);
-  if(!dateVal){ toast('❌ تاریخ را انتخاب کنید'); return; }
+  if(!dateVal){ toast('❌ تاریخ بازدید را انتخاب کنید'); return; }
   const result = document.getElementById('visitResult').value;
-  f.visit = { date: dateVal, result, note: document.getElementById('visitNote').value };
-  const resultTxt = result==='ok'?'✅ تایید':result==='warn'?'🟡 هشدار':'❌ رد شد';
-  addLog('بازدید', `«${f.name}» بازدید شد — نتیجه: ${resultTxt} — تاریخ: ${dateVal}`);
-  save(); closeModal('visitModal'); toast('✅ بازدید ثبت شد'); render();
+  const revisitDate = result==='revisit' ? fixJalali(document.getElementById('revisitDate').value) : '';
+  if(result==='revisit' && !revisitDate){ toast('❌ تاریخ بازدید مجدد را مشخص کنید'); return; }
+  const existing = editing.visitRecordId ? visits.find(v=>v.id===editing.visitRecordId) : null;
+  const record = existing || {
+    id: 'v_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    farmId: f.id, createdAt: new Date().toISOString()
+  };
+  const isCurrent = !existing ? true : (f.visit?.recordId===record.id);
+  Object.assign(record, {
+    date: dateVal, result, revisitDate, note: document.getElementById('visitNote').value,
+    updatedAt: new Date().toISOString()
+  });
+  if(isCurrent){
+    Object.assign(record,{farmId:f.id, farmCode:f.code||'', farmName:f.name||'', hatch:f.hatch||''});
+  }
+  if(!existing){
+    Object.assign(record,{farmId:f.id, farmCode:f.code||'', farmName:f.name||'', hatch:f.hatch||''});
+    visits.push(record);
+  }
+  if(isCurrent){
+    f.visit = {recordId:record.id, date:dateVal, result, revisitDate, note:record.note};
+  }
+  const resultTxt = result==='ok'?'✅ تایید':result==='revisit'?'🔁 بازدید مجدد':'❌ رد / کنسل';
+  addLog(existing ? 'ویرایش بازدید' : 'بازدید', `«${f.name}» — ${resultTxt} — تاریخ: ${dateVal}${revisitDate ? ` — بازدید مجدد: ${revisitDate}` : ''}`);
+  saveVisits(); save(); closeModal('visitModal');
+  toast(existing ? '✅ بازدید ویرایش شد' : '✅ بازدید ثبت شد');
+  render();
 }
 
 function openFollowup(id){
@@ -1924,8 +2113,9 @@ function loadDemoData(){
 
 function clearAllData(){
   if(!confirm('همه داده‌ها و سابقه پاک شود؟')) return;
-  farms = []; sessions = []; currentSession = null;
-  save(); saveSessions(); saveCurrentSession();
+  farms = []; sessions = []; currentSession = null; visits = [];
+  save(); saveSessions(); saveCurrentSession(); saveVisits();
+  localStorage.removeItem(KEY_VISITS_MIGRATED);
   render(); toast('🗑 همه داده‌ها پاک شد');
 }
 
@@ -1962,6 +2152,7 @@ document.getElementById('statusFilter').addEventListener('change', e=>{
   currentFilter.status = e.target.value; renderFarms();
 });
 document.getElementById('currentUser').addEventListener('change', ()=>render());
+document.getElementById('visitResult').addEventListener('change', toggleRevisitDateField);
 document.querySelectorAll('.overlay').forEach(o=>{
   o.addEventListener('click', e=>{ if(e.target===o) o.classList.remove('show'); });
 });
@@ -1969,6 +2160,7 @@ document.getElementById('calOverlay').addEventListener('click', e=>{
   if(e.target.id === 'calOverlay') closeCalendar();
 });
 
+migrateLegacyVisits();
 render();
 
 if('serviceWorker' in navigator){
